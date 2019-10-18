@@ -11,6 +11,9 @@ player_symbol(2, 'P').
 % discos brancos - 1
 % discos pretos - 2
 
+increment(X, X1) :-
+	X1 is X+1.
+
 initBoard(X):-
 	X=[[2,0,2,0,2],
 	   [0,0,0,0,0],
@@ -18,25 +21,28 @@ initBoard(X):-
 	   [0,0,0,0,0],
 	   [1,0,1,0,1]].
 
-printBoard([]):-
-	write('---------------------').
-	
-printLine([]):-
-	write('|').
+printBoard([], LineNr):-
+	write('   ---------------------').
 
-printCell([]).
-
-printBoard([L|T]):-
-	write('---------------------'),
+printBoard([L|T], LineNr):-
+	write('   ---------------------'),
 	nl,
+	put_code(LineNr),
+	write('  '),
 	printLine(L),
 	nl,
-	printBoard(T).
+	increment(LineNr, NewLineNr),
+	printBoard(T, NewLineNr).
+
+printLine([]):-
+	write('|').
 
 printLine([C|T]):-
 	write('| '),
 	printCell(C),
 	printLine(T).
+
+printCell([]).
 
 printCell(C):-
 	simbolo(C,S),
@@ -49,9 +55,12 @@ initGame(Board, Player):-
 	nl.
 
 displayGame(Board, Player):-
+	nl,
 	write('Player '),
 	player_symbol(Player, S),
 	write(S),
 	nl,
 	nl,
-	printBoard(Board).
+	write('     A   B   C   D   E'),
+	nl,
+	printBoard(Board, 49).
