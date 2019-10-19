@@ -13,7 +13,7 @@ increment(X, X1) :-
 	X1 is X+1.
 
 displayGame(Board, Player):-
-	nl,
+	nl, nl,
 	write('     A   B   C   D   E'),
 	nl,
 	printBoard(Board, 49),
@@ -23,20 +23,6 @@ displayGame(Board, Player):-
 	write(S),
 	nl, nl.
 
-printTopBorder(_):-
-	write('   '),
-	put_code(201),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(187), nl.
-
 printBoard([L|T], 49):-
 	printTopBorder(_),
 	put_code(49),
@@ -44,7 +30,6 @@ printBoard([L|T], 49):-
 	printLine(L),
 	nl,
 	printBoard(T, 50).
-
 
 printBoard([], _):-
 	write('   '),
@@ -98,3 +83,18 @@ printDivider(_):-
 	put_code(206),
 	put_code(205), put_code(205), put_code(205),
 	put_code(185), nl.
+
+printTopBorder(_):-
+	write('   '),
+	put_code(201),
+	put_code(205), put_code(205), put_code(205),
+	put_code(203),
+	put_code(205), put_code(205), put_code(205),
+	put_code(203),
+	put_code(205), put_code(205), put_code(205),
+	put_code(203),
+	put_code(205), put_code(205), put_code(205),
+	put_code(203),
+	put_code(205), put_code(205), put_code(205),
+	put_code(187), nl.
+	
