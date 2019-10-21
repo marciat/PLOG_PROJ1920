@@ -12,47 +12,50 @@ player_symbol(2, 'B').
 increment(X, X1) :-
 	X1 is X+1.
 
+decrement(X, X1) :-
+	X1 is X-1.
+
+getNumberOfColumns([H|_], Columns):-
+	length(H, Columns).
+
 displayGame(Board, Player):-
 	nl, nl,
-	write('     A   B   C   D   E'),
+	[H|_] = Board, 
+	write('  '),
+	printHorizontalCoordinates(H, 65),
 	nl,
-	printBoard(Board, 49),
+	getNumberOfColumns(Board, Columns),
+	printBoard(Board, 49, Columns),
 	nl, nl,
 	write('Player '),
 	player_symbol(Player, S),
 	write(S),
 	nl, nl.
 
-printBoard([L|T], 49):-
-	printTopBorder(_),
+printBoard([L|T], 49, Columns):-
+	write('   '),
+	put_code(201), printTopBorder(Columns),
 	put_code(49),
 	write('  '),
 	printLine(L),
 	nl,
-	printBoard(T, 50).
+	printBoard(T, 50, Columns).
 
-printBoard([], _):-
+printBoard([], _, Columns):-
 	write('   '),
 	put_code(200),
-	put_code(205), put_code(205), put_code(205),
-	put_code(202),
-	put_code(205), put_code(205), put_code(205),
-	put_code(202),
-	put_code(205), put_code(205), put_code(205),
-	put_code(202),
-	put_code(205), put_code(205), put_code(205),
-	put_code(202),
-	put_code(205), put_code(205), put_code(205),
+	printBottomBorder(Columns),
 	put_code(188), nl.
 
-printBoard([L|T], LineNr):-
-	printDivider(_),
+printBoard([L|T], LineNr, Columns):-
+	write('   '),
+	put_code(204), printDivider(Columns), put_code(185), nl,
 	put_code(LineNr),
 	write('  '),
 	printLine(L),
 	nl,
 	increment(LineNr, NewLineNr),
-	printBoard(T, NewLineNr).
+	printBoard(T, NewLineNr, Columns).
 
 printLine([]):-
 	put_code(186).
@@ -70,31 +73,38 @@ printCell(C):-
 	write(S),
 	write(' ').
 
-printDivider(_):-
-	write('   '),
-	put_code(204),
-	put_code(205), put_code(205), put_code(205),
-	put_code(206),
-	put_code(205), put_code(205), put_code(205),
-	put_code(206),
-	put_code(205), put_code(205), put_code(205),
-	put_code(206),
-	put_code(205), put_code(205), put_code(205),
-	put_code(206),
-	put_code(205), put_code(205), put_code(205),
-	put_code(185), nl.
+printHorizontalCoordinates([], _).
 
-printTopBorder(_):-
+printHorizontalCoordinates([_|T], LetterCode):-
 	write('   '),
-	put_code(201),
+	put_code(LetterCode),
+	increment(LetterCode, NewLetterCode),
+	printHorizontalCoordinates(T,NewLetterCode).
+
+printDivider(1):-
+	put_code(205), put_code(205), put_code(205).	
+
+printDivider(NrColumns):-
 	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
-	put_code(205), put_code(205), put_code(205),
-	put_code(203),
+	put_code(206),
+	decrement(NrColumns, NewNr),
+	printDivider(NewNr).
+
+printTopBorder(1):-
 	put_code(205), put_code(205), put_code(205),
 	put_code(187), nl.
-	
+
+printTopBorder(NrColumns):-
+	put_code(205), put_code(205), put_code(205),
+	put_code(203),
+	decrement(NrColumns, NewNr),
+	printTopBorder(NewNr).	
+
+printBottomBorder(1):-
+	put_code(205), put_code(205), put_code(205).
+
+printBottomBorder(NrColumns):-
+	put_code(205), put_code(205), put_code(205),
+	put_code(202),
+	decrement(NrColumns, NewNr),
+	printBottomBorder(NewNr).
