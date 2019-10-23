@@ -1,24 +1,46 @@
-simbolo(0, ' ').
-simbolo(1, 'W').
-simbolo(2, 'B').
+% empty cells - 0 - ' '
+% white discs - 1 - 'W'
+% black discs - 2 - 'B'
+
+symbol(0, ' ').
+symbol(1, 'W').
+symbol(2, 'B').
+
+% white discs player - 1 - 'W'
+% black discs player - 2- 'B'
 
 player_symbol(1, 'W').
 player_symbol(2, 'B').
 
-% empty cells - 0
-% white discs - 1
-% black discs - 2
-
+% increment(+X, -X1)
+% X - original value
+% X1 - incremented value
+% increments X by 1 and stores the result in X1
 increment(X, X1) :-
 	X1 is X+1.
 
+% decrement(+X, -X1)
+% X - original value
+% X1 - decremented value
+% decrements X by 1 and stores the result in X1
 decrement(X, X1) :-
 	X1 is X-1.
 
+% getNumberOfColumns(+[H|_], -Columns)
+% [H|T] - Board
+% Columns - Number of columns of Board
+% given a board, counts the number of items in the first line (H - head),
+% which is the number of columns of the board
 getNumberOfColumns([H|_], Columns):-
 	length(H, Columns).
 
-displayGame(Board, Player):-
+% displayGame(+Board, +Player, +Move)
+% Board - Board to be displayed
+% Player - current player number
+% Move - current player move number
+% displays the current game state
+% prints horizontal coordinates, board and player
+displayGame(Board, Player, Move):-
 	nl, nl,
 	[H|_] = Board, 
 	write('  '),
@@ -27,10 +49,9 @@ displayGame(Board, Player):-
 	getNumberOfColumns(Board, Columns),
 	printBoard(Board, 49, Columns),
 	nl, nl,
-	write('Player '),
-	player_symbol(Player, S),
-	write(S),
+	printPlayer(Player, Move),
 	nl, nl.
+
 
 printBoard([L|T], 49, Columns):-
 	write('   '),
@@ -68,7 +89,7 @@ printLine([C|T]):-
 printCell([]).
 
 printCell(C):-
-	simbolo(C,S),
+	symbol(C,S),
 	write(' '),
 	write(S),
 	write(' ').
@@ -108,3 +129,11 @@ printBottomBorder(NrColumns):-
 	put_code(202),
 	decrement(NrColumns, NewNr),
 	printBottomBorder(NewNr).
+
+printPlayer(Player, Move):-
+	write('Player '),
+	player_symbol(Player, S),
+	write(S),
+	write('  -  Move '),
+	write(Move).
+
