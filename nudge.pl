@@ -28,7 +28,7 @@ initGame(Board, Player):-
 
 
 play:-
-	initGame(X, 0).
+	initGame(_, 1).
 
 
 %validMoves(+Board, +Player, -ListOfMoves)
