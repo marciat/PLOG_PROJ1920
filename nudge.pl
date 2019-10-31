@@ -1,3 +1,4 @@
+
 :-use_module(library(lists)).
 :-include('view.pl').
 
@@ -15,6 +16,7 @@ initBoard(Board):-
 	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
+
 % initGame(-Board, +Player)
 % Board - variable in which the game board state will be stored
 % Player - player to make the first move, can be 1 (white discs) or 2 (black discs)
@@ -23,3 +25,18 @@ initBoard(Board):-
 initGame(Board, Player):-
 	initBoard(Board),
 	displayGame(Board,Player,0).
+
+
+play:-
+	initGame(X, 0).
+
+
+%validMoves(+Board, +Player, -ListOfMoves)
+
+%move(+Move, +Board, -NewBoard)
+
+%game_over(+Board, -Winner)
+
+
+	
+
