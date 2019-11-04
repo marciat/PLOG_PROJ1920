@@ -3,12 +3,25 @@
  * Element - element whose number of ocurrences will be counted
  * NumberOfOcurrences - number of ocurrences of Element in List
  * counts the number of ocurrences of a specific element in a list */
-count([], _, N):-
-	N = 0.
+count([], _, 0).
 
 count([E|T], E, N):-
-    N1 is N+1,
-	count(T, E, N1).
+	count(T, E, N1),
+	N is N1 + 1.
 
-count([_|T], E, N):-
-	count(T, E, N).
+count([X|T], E, N):-
+	X\=E,
+	count(T,E,N).
+
+/* replace(+List, +Index, +Element, -NewList)
+ * replaces element at Index of List by Element
+ * and saves the result in NewList
+ */
+
+replace([_ | Tail], 1, Element, NewList):-
+	append(Element, Tail, NewList).
+
+replace([Element|Tail], Index, Element, NewList):-
+	NewIndex is Index - 1,
+	replace(Tail, NewIndex, Element, NewList),
+	append(NewList, Head, NewList).

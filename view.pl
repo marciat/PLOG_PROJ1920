@@ -24,7 +24,7 @@ player_symbol(2, 'B').
 getNumberOfColumns([H|_], Columns):-
 	length(H, Columns).
 
- /* displayGame(+Board, +Player, +Move)
+/* displayGame(+Board, +Player, +Move)
  * Board - Board to be displayed
  * Player - current player number
  * Move - current player move number
@@ -40,9 +40,9 @@ displayGame(Board, Player, Move):-
 	printBoard(Board, 49, Columns),
 	nl, nl,
 	printPlayer(Player, Move),
-	nl, nl.
+	nl, nl. 
 
- /* printBoard(+Board, +LineNr, +Columns)
+/* printBoard(+Board, +LineNr, +Columns)
  * Board - Board to be displayed
  * LineNr - Index of line currently being printed 
  * Columns - Number of board columns */
@@ -92,8 +92,7 @@ printLine([C|T]):-
 
 /* printCell(+Cell)
  * Cell - cell to be printed
- * prints cell content
- */
+ * prints cell content */
 
 % if cell is empty there is nothing to display
 printCell([]).
@@ -167,7 +166,7 @@ printBottomBorder(NrColumns):-
 	NewNr is NrColumns - 1,
 	printBottomBorder(NewNr).
 
- /* printPlayer(+Player, +Move)
+/* printPlayer(+Player, +Move)
  * Player - current player
  * Move - player's current move
  * prints current player symbol and player's current move */
@@ -177,4 +176,13 @@ printPlayer(Player, Move):-
 	write(S),
 	write('  -  Move '),
 	write(Move).
+
+/* displayWinner(+Winner)
+ * Winner - game winner
+ * prints that game has ended and the winner*/
+displayWinner(Winner):-
+	write('Game Over! Player '),
+	player_symbol(Winner, S),
+	write(S),
+	write(' won!'), nl.
 
