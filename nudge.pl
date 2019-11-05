@@ -9,7 +9,6 @@ white discs - 1
 black discs - 2
 */
 
-
 /* initBoard(-Board)
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
@@ -40,7 +39,7 @@ countBoardPieces([H|T], Piece, Number):-
  * if it is not valid, asks for new input until a valid move is input
  */
 readMove(Board, Player, MoveNr, OriginalBoard, Move):-
-	write('Which disc do you want to move?'), nl,
+	write('Which disc do you want to move?'), nl, nl,
 	write('Horizontal coord.: '),
 	get_code(H),
 	get_char(_),
@@ -50,10 +49,12 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	get_char(_),
 	OldV is V - 48,
 	nl, write('Direction (Up - U, Down - D, Left - L, Right - R): '),
-	get_char(Direction), nl,
+	get_char(Direction),
+	get_char(_),
+	nl,
 	isPlayerMoveValid(Board, OriginalBoard, MoveNr, [OldH, OldV, Direction], Valid),
-	(Valid == 1 -> (Move = [OldH, OldV, Direction]) ; 
-	(write('That is not a valid move. Please try again.'), readMove(Board, Player, MoveNr, OriginalBoard, Move))).
+	(Valid == 1 -> Move = [OldH, OldV, Direction] ; 
+	(write('That is not a valid move. Please try again.'), nl, readMove(Board, Player, MoveNr, OriginalBoard, Move))).
 
 
 /* play
@@ -63,25 +64,21 @@ play:-
 	playGame(Board, 1).
 
 playGame(Board, Player):-
-	%displayGame(Board, Player, 0),
+	displayGame(Board, Player, 0),
 	gameOver(Board, Winner),
 	Winner == 0, !,
 	playerMove(Board, Board, Player, 0, NewBoard),
-	%displayGame(NewBoard, Player, 1),
+	displayGame(NewBoard, Player, 1),
 	gameOver(NewBoard, Winner),
 	Winner == 0, !,
 	playerMove(NewBoard, Board, Player, 1, FinalBoard),
-	NewPlayer is (Player mod 2) + 1,
+	NewPlayer is Player mod 2 + 1,
 	playGame(FinalBoard, NewPlayer).
 	
 
 playGame(Board, _):-
 	gameOver(Board, Winner),
-	Winner == 1, !,
-	displayWinner(1).
-
-playGame(_, _):-
-	displayWinner(2).
+	displayWinner(Winner).
 
 %isPlayerMoveValid(+Board, +OriginalBoard, +MoveNr, +Move, -Valid)
 isPlayerMoveValid(Board, OriginalBoard, MoveNr, Move, Valid):-
@@ -99,14 +96,12 @@ move(Move, Board, NewBoard):-
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
 	nth1(OldV, Board, Line),
-	nth1(OldH, Board, Player),
+	nth1(OldH, Line, Player),
 	replace(Line, OldH, 0, NewLine),
-	replace(Board, OldV, NewLine, NewBoard),
-	Line = [],
-	NewLine = [],
-	nth1(NewV, Board, Line),
-	replace(Line, NewH, Player, NewLine),
-	replace(Board, NewV, NewLine, NewBoard).
+	replace(Board, OldV, NewLine, TmpBoard),
+	nth1(NewV, TmpBoard, NewDiscLine),
+	replace(NewDiscLine, NewH, Player, FinalLine),
+	replace(TmpBoard, NewV, FinalLine, NewBoard).
 
 
 %playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
@@ -123,13 +118,7 @@ playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
 gameOver(Board, Winner):-
 	countBoardPieces(Board, 1, White),
 	countBoardPieces(Board, 2, Black),
-	White > Black, !, Winner = 1.
-
-gameOver(Board, Winner):-
-	countBoardPieces(Board, 1, White),
-	countBoardPieces(Board, 2, Black),
-	Black > White, !, Winner = 2.
-
-gameOver(_, Winner):-
-	Winner = 0.
+	(White > Black, Winner = 1;
+	Black > White, Winner = 2;
+	Winner = 0).
 

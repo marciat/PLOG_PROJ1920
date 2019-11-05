@@ -18,10 +18,10 @@ count([X|T], E, N):-
  * and saves the result in NewList
  */
 
-replace([_ | Tail], 1, Element, NewList):-
-	append(Element, Tail, NewList).
+replace([_| Tail], 1, Element, NewList):-
+	append([Element], Tail, NewList).
 
-replace([Element|Tail], Index, Element, NewList):-
+replace([Head|Tail], Index, Element, NewList):-
 	NewIndex is Index - 1,
-	replace(Tail, NewIndex, Element, NewList),
-	append(NewList, Head, NewList).
+	replace(Tail, NewIndex, Element, TmpList),
+	append([Head], TmpList, NewList).
