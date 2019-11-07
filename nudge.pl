@@ -19,6 +19,49 @@ initBoard(Board):-
 	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
+
+/* play
+ * starts game */
+play:-
+	initBoard(Board),
+	playGame(Board, 1).
+
+/* playGame(+Board, +Player)
+ * Board - current game board
+ * Player - current player
+ * handles gameplay
+ * displays game, handles moves and checks if game has ended after every move
+ */
+playGame(Board, Player):-
+	displayGame(Board, Player, 0),
+	gameOver(Board, Winner),
+	Winner == 0, !,
+	playerMove(Board, Board, Player, 0, NewBoard),
+	displayGame(NewBoard, Player, 1),
+	gameOver(NewBoard, Winner),
+	Winner == 0, !,
+	playerMove(NewBoard, Board, Player, 1, FinalBoard),
+	NewPlayer is Player mod 2 + 1,
+	playGame(FinalBoard, NewPlayer).
+	
+% if the game has ended
+playGame(Board, _):-
+	gameOver(Board, Winner),
+	displayWinner(Winner).
+
+/* gameOver(+Board, -Winner)
+ * Board - game board
+ * Winner - game winner, if there is one
+ * checks if game has ended, by checking if one player has more pieces on the board than the other
+ * Winner is 0 if the game has not ended
+ */
+gameOver(Board, Winner):-
+	countBoardPieces(Board, 1, White),
+	countBoardPieces(Board, 2, Black),
+	(White > Black, Winner = 1;
+	Black > White, Winner = 2;
+	Winner = 0).
+
 /* countBoardPieces(+Board, +Piece, -Number)
  * Board - board with pieces to be counted
  * Piece - type of pieces to be counted
@@ -32,7 +75,24 @@ countBoardPieces([H|T], Piece, Number):-
 	countBoardPieces(T, Piece, NewNumber),
     Number is NewNumber + N.
 
-/* readMove(-Move) 
+/* playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
+ * Board - current board
+ * OriginalBoard - board when player's turn started (different from Board if it's the second move)
+ * Player - current player
+ * MoveNr - current move of the player's turn (first or second)
+ * NewBoard - new board after the move 
+ * reads user input for a move, validates it and then applies the move to the board
+ */
+playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
+	readMove(Board, Player, MoveNr, OriginalBoard, Move),
+	move(Move, Board, NewBoard).
+
+
+/* readMove(+Board, +Player, +MoveNr, +OriginalBoard, -Move)
+ * Board - current board
+ * Player - current player
+ * MoveNr - current move of the player's turn (first or second)
+ * OriginalBoard - board when player's turn started (different from Board if it's the second move)
  * Move - information about the move read
  *        list with coordinates of disc and direction to move it
  * reads move information input by the user, checks if it is valid
@@ -52,42 +112,16 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	get_char(Direction),
 	get_char(_),
 	nl,
-	isPlayerMoveValid(Board, OriginalBoard, MoveNr, [OldH, OldV, Direction], Valid),
+	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], Valid),
 	(Valid == 1 -> Move = [OldH, OldV, Direction] ; 
-	(write('That is not a valid move. Please try again.'), nl, readMove(Board, Player, MoveNr, OriginalBoard, Move))).
+	(write('That is not a valid move. Please try again.'), nl, nl, readMove(Board, Player, MoveNr, OriginalBoard, Move))).
 
-
-/* play
- * starts game */
-play:-
-	initBoard(Board),
-	playGame(Board, 1).
-
-playGame(Board, Player):-
-	displayGame(Board, Player, 0),
-	gameOver(Board, Winner),
-	Winner == 0, !,
-	playerMove(Board, Board, Player, 0, NewBoard),
-	displayGame(NewBoard, Player, 1),
-	gameOver(NewBoard, Winner),
-	Winner == 0, !,
-	playerMove(NewBoard, Board, Player, 1, FinalBoard),
-	NewPlayer is Player mod 2 + 1,
-	playGame(FinalBoard, NewPlayer).
-	
-
-playGame(Board, _):-
-	gameOver(Board, Winner),
-	displayWinner(Winner).
-
-%isPlayerMoveValid(+Board, +OriginalBoard, +MoveNr, +Move, -Valid)
-isPlayerMoveValid(Board, OriginalBoard, MoveNr, Move, Valid):-
-	Valid is 1.
-%isPlayerMoveValid(Board, _, 0, Move, Valid):-
-
-
-%validMoves(+Board, +Player, -ListOfMoves)
-
+/* move(+Move, +Board, -NewBoard)
+ * Move - information about the move
+ *        list with coordinates of disc and direction to move it
+ * Board - current game board (before move is applied)
+ * NewBoard - new game board (after move is applied)
+ */
 move(Move, Board, NewBoard):-
 	[OldH, OldV | D] = Move,
 	[Direction | _] = D,
@@ -104,21 +138,31 @@ move(Move, Board, NewBoard):-
 	replace(TmpBoard, NewV, FinalLine, NewBoard).
 
 
-%playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
-playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
-	readMove(Board, Player, MoveNr, OriginalBoard, Move),
-	move(Move, Board, NewBoard).
-
-/* gameOver(+Board, -Winner)
- * Board - game board
- * Winner - game winner, if there is one
- * checks if game has ended, by checking if one player has more pieces on the board than the other
- * Winner is 0 if the game has not ended
+/* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
+ * Board - current game board
+ * Player - current player
+ * Original Board - game board in the beginning of player's turn
+ * MoveNr - current move of the player's turn (first or second)
+ * Move - information about the move
+ *        list with coordinates of disc and direction to move it
+ * Valid - 1 if move is valid and 0 if it is not
  */
-gameOver(Board, Winner):-
-	countBoardPieces(Board, 1, White),
-	countBoardPieces(Board, 2, Black),
-	(White > Black, Winner = 1;
-	Black > White, Winner = 2;
-	Winner = 0).
+isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
+	[OldH, OldV | D] = Move,
+	[Direction | _] = D,
+	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
+	Direction = 'D', NewH is OldH, NewV is OldV + 1;
+	Direction = 'L', NewH is OldH - 1, NewV is OldV;
+	Direction = 'R', NewH is OldH + 1, NewV is OldV),
+	nth1(OldV, Board, Line),
+	nth1(OldH, Line, P),
+	P==Player, !,
+	Valid is 1.
+
+isPlayerMoveValid(_,_,_,_,_,Valid):-
+	Valid is 0.
+
+%validMoves(+Board, +Player, -ListOfMoves)
+
+
 
