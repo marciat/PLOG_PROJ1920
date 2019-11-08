@@ -65,3 +65,16 @@ setPosition(Board, Horizontal, Vertical, Content, NewBoard):-
 	nth1(Vertical, Board, Line),
 	replace(Line, Horizontal, Content, NewLine),
 	replace(Board, Vertical, NewLine, NewBoard).
+
+
+/* getBoardDimensions(+Board, -Lines, -Columns)
+ * Board - game board
+ * Lines - number of lines
+ * Columns - number of columns
+ * gets number of lines and columns of a given board
+ */
+getBoardDimensions(Board, Lines, Columns):-
+	length(Board, Lines),
+	[H|_] = Board,
+	length(H, Columns).
+

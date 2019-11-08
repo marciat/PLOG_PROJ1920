@@ -130,14 +130,23 @@ move(Move, Board, NewBoard):-
  * Valid - 1 if move is valid and 0 if it is not
  */
 isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
+	getBoardDimensions(Board, Lines, Columns),
 	[OldH, OldV | D] = Move,
 	[Direction | _] = D,
 	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
 	Direction = 'D', NewH is OldH, NewV is OldV + 1;
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
-	nth1(OldV, Board, Line),
-	nth1(OldH, Line, P),
+	!,
+	OldH > 0, !,
+	OldV > 0, !,
+	NewH > 0, !,
+	NewV > 0, !,
+	OldH =< Columns, !,
+	OldV =< Lines, !,
+	NewH =< Columns, !,
+	NewV =< Lines, !,
+	getPosition(Board, OldV, OldH, P),
 	P==Player, !,
 	Valid is 1.
 

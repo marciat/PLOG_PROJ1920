@@ -1,3 +1,5 @@
+%:- include('auxiliar.pl').
+
 /*
  * empty cells - 0 - ' '
  * white discs - 1 - 'W'
@@ -16,13 +18,6 @@ symbol(2, 'B').
 player_symbol(1, 'W').
 player_symbol(2, 'B').
 
-/* getNumberOfColumns(+[H|_], -Columns)
- * [H|T] - Board
- * Columns - Number of columns of Board
- * given a board, counts the number of items in the first line (H - head),
- * which is the number of columns of the board */
-getNumberOfColumns([H|_], Columns):-
-	length(H, Columns).
 
 /* displayGame(+Board, +Player, +Move)
  * Board - Board to be displayed
@@ -36,7 +31,7 @@ displayGame(Board, Player, Move):-
 	write('  '),
 	printHorizontalCoordinates(H, 65),
 	nl,
-	getNumberOfColumns(Board, Columns),
+	getBoardDimensions(Board, _, Columns),
 	printBoard(Board, 49, Columns),
 	nl, nl,
 	printPlayer(Player, Move),
