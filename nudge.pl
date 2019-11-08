@@ -62,19 +62,6 @@ gameOver(Board, Winner):-
 	Black > White, Winner = 2;
 	Winner = 0).
 
-/* countBoardPieces(+Board, +Piece, -Number)
- * Board - board with pieces to be counted
- * Piece - type of pieces to be counted
- * Number - number of pieces of specified type on the board
- * counts the number of pieces of a certain type that are on the board
- */
-countBoardPieces([], _, 0).
-
-countBoardPieces([H|T], Piece, Number):-
-	count(H, Piece, N),
-	countBoardPieces(T, Piece, NewNumber),
-    Number is NewNumber + N.
-
 /* playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
  * Board - current board
  * OriginalBoard - board when player's turn started (different from Board if it's the second move)
@@ -129,14 +116,9 @@ move(Move, Board, NewBoard):-
 	Direction = 'D', NewH is OldH, NewV is OldV + 1;
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
-	nth1(OldV, Board, Line),
-	nth1(OldH, Line, Player),
-	replace(Line, OldH, 0, NewLine),
-	replace(Board, OldV, NewLine, TmpBoard),
-	nth1(NewV, TmpBoard, NewDiscLine),
-	replace(NewDiscLine, NewH, Player, FinalLine),
-	replace(TmpBoard, NewV, FinalLine, NewBoard).
-
+	getPosition(Board, OldH, OldV, Player),
+	setPosition(Board, OldH, OldV, 0, TmpBoard),
+	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
 
 /* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
  * Board - current game board
