@@ -78,3 +78,18 @@ getBoardDimensions(Board, Lines, Columns):-
 	[H|_] = Board,
 	length(H, Columns).
 
+
+/* validCoords(+Board, +Horizontal, +Vertical, -Valid)
+ * Board - game board
+ * Horizontal - horizontal coordinate
+ * Vertical - vertical coordinate
+ * Valid - 1 if coordinates are valid, 0 if they are not
+ * checks if coordinates are valid for a board, that is, if they are within board boundaries
+ */
+validCoords(Board, Horizontal, Vertical, Valid):-
+	getBoardDimensions(Board, Lines, Columns),
+	(Horizontal > 0, Vertical > 0, Horizontal =< Columns, Vertical =< Lines), !,
+	Valid = 1.
+
+validCoords(_, _, _, Valid):-
+	Valid = 0.

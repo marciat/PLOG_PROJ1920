@@ -33,11 +33,11 @@ play:-
  * displays game, handles moves and checks if game has ended after every move
  */
 playGame(Board, Player):-
-	displayGame(Board, Player, 0),
+	%displayGame(Board, Player, 0),
 	gameOver(Board, Winner),
 	Winner == 0, !,
 	playerMove(Board, Board, Player, 0, NewBoard),
-	displayGame(NewBoard, Player, 1),
+	%displayGame(NewBoard, Player, 1),
 	gameOver(NewBoard, Winner),
 	Winner == 0, !,
 	playerMove(NewBoard, Board, Player, 1, FinalBoard),
@@ -130,27 +130,18 @@ move(Move, Board, NewBoard):-
  * Valid - 1 if move is valid and 0 if it is not
  */
 isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
-	getBoardDimensions(Board, Lines, Columns),
 	[OldH, OldV | D] = Move,
 	[Direction | _] = D,
 	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
 	Direction = 'D', NewH is OldH, NewV is OldV + 1;
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
-	!,
-	OldH > 0, !,
-	OldV > 0, !,
-	NewH > 0, !,
-	NewV > 0, !,
-	OldH =< Columns, !,
-	OldV =< Lines, !,
-	NewH =< Columns, !,
-	NewV =< Lines, !,
-	getPosition(Board, OldV, OldH, P),
-	P==Player, !,
+	validCoords(Board, OldH, OldV, 1),
+	validCoords(Board, NewH, NewV, 1),
+	getPosition(Board, OldV, OldH, Player), !,
 	Valid is 1.
 
-isPlayerMoveValid(_,_,_,_,_,Valid):-
+isPlayerMoveValid(_, _, _, _, _, Valid):-
 	Valid is 0.
 
 %validMoves(+Board, +Player, -ListOfMoves)
