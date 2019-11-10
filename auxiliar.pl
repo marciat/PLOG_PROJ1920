@@ -44,7 +44,6 @@ getPosition(Board, Horizontal, Vertical, Content):-
  * replaces element at Index of List by Element
  * and saves the result in NewList
  */
-
 replace([_| Tail], 1, Element, NewList):-
 	append([Element], Tail, NewList).
 
@@ -103,7 +102,7 @@ validCoords(_, _, _, Valid):-
  * counts the number of cells with the same content, from a starting cell and in a given direction
  */
 countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
-	[H|V] = StartingCoordinates,
+	[H,V|_] = StartingCoordinates,
 	(Direction = 'U', NewH is H, NewV is V - 1;
 	Direction = 'D', NewH is H, NewV is V + 1;
 	Direction = 'L', NewH is H - 1, NewV is V;

@@ -19,7 +19,6 @@ initBoard(Board):-
 	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
-
 /* play
  * starts game */
 play:-
@@ -92,7 +91,8 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	nl, nl,
 	(Type = 'D', write('Which disc do you want to move?');
 	Type = 'L', write('Coordinates of the first disc of the line:');
-	readMove(Board, Player, MoveNr, OriginalBoard, Move)), nl, nl,
+	readMove(Board, Player, MoveNr, OriginalBoard, Move)),
+	nl, nl,
 	write('Horizontal coord.: '),
 	get_code(H),
 	get_char(_),
@@ -105,9 +105,10 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	get_char(Direction),
 	get_char(_),
 	nl,
-	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction, Type, 0], Valid),
-	(Valid == 1 -> Move = [OldH, OldV, Direction] ; 
-	(write('That is not a valid move. Please try again.'), nl, nl, readMove(Board, Player, MoveNr, OriginalBoard, Move))).
+	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction, Type], Valid),
+	(Valid = 1, Move = [OldH, OldV, Direction, Type] ;
+	write('That is not a valid move. Please try again.'), nl, nl,
+	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
 
 /* move(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -116,6 +117,18 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
  * NewBoard - new game board (after move is applied)
  */
 move(Move, Board, NewBoard):-
+	nth1(4, Move, Type),
+	(Type = 'D', simpleMove(Move, Board, NewBoard);
+	Type = 'L', multipleMove(Move, Board, NewBoard)).
+
+/* simpleMove(+Move, +Board, -NewBoard)
+ * Move - information about the move
+ *        list with coordinates of disc and direction to move it
+ * Board - current game board (before move is applied)
+ * NewBoard - new game board (after move is applied)
+ * moves a single disc
+ */
+simpleMove(Move, Board, NewBoard):-
 	[OldH, OldV | D] = Move,
 	[Direction | _] = D,
 	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
@@ -125,6 +138,35 @@ move(Move, Board, NewBoard):-
 	getPosition(Board, OldH, OldV, Player),
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
+
+/* multipleMove(+Move, +Board, -NewBoard)
+ * Move - information about the move
+ *        list with coordinates of disc and direction to move it
+ * Board - current game board (before move is applied)
+ * NewBoard - new game board (after move is applied)
+ * moves a line of discs
+ */
+multipleMove(Move, Board, NewBoard):-
+	[OldH, OldV | D] = Move,
+	[Direction | _] = D,
+	getPosition(Board, OldH, OldV, Player),
+	countLineOfDiscs(Board, [OldH, OldV], Direction, Player, PlayerDiscs),
+	(Direction = 'U', NewH is OldH, NewV is OldV - PlayerDiscs;
+		Direction = 'D', NewH is OldH, NewV is OldV + PlayerDiscs;
+		Direction = 'L', NewH is OldH - PlayerDiscs, NewV is OldV;
+		Direction = 'R', NewH is OldH + PlayerDiscs, NewV is OldV),
+	setPosition(Board, OldH, OldV, 0, TmpBoard),
+	getPosition(Board, NewH, NewV, Opponent),
+	(Opponent = 0, TmpBoard2 = TmpBoard;
+		countLineOfDiscs(Board, [OldH, OldV], Direction, Opponent, OpponentDiscs),
+		(Direction = 'U', OpponentH is NewH, OpponentV is NewV - OpponentDiscs;
+			Direction = 'D', OpponentH is NewH, OpponentV is NewV + OpponentDiscs;
+			Direction = 'L', OpponentH is NewH - OpponentDiscs, OpponentV is NewV;
+			Direction = 'R', OpponentH is NewH + OpponentDiscs, OpponentV is NewV),
+		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2);
+		repeat)),
+	setPosition(TmpBoard2, NewH, NewV, Player, NewBoard).
+
 
 /* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
  * Board - current game board
@@ -139,16 +181,17 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
-	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
+	((Direction = 'U', NewH is OldH, NewV is OldV - 1;
 	Direction = 'D', NewH is OldH, NewV is OldV + 1;
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
 	validCoords(Board, OldH, OldV, 1),
 	validCoords(Board, NewH, NewV, 1),
-	getPosition(Board, OldV, OldH, Player), !,
+	getPosition(Board, OldV, OldH, Player),
 	(Type = 'D', getPosition(Board, NewH, NewH, 0);
 	Type = 'L', validateLineMove(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], 1)),
-	Valid is 1.
+	Valid is 1);
+	Valid is 0.
 
 isPlayerMoveValid(_, _, _, _, _, Valid):-
 	Valid is 0.
@@ -157,7 +200,7 @@ validateLineMove(Board, Player, OriginalBoard, MoveNr, MoveInfo, Valid):-
 	[Horizontal, Vertical | D] = MoveInfo,
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
-	(NumberOfDiscs > 1,
+	(PlayerDiscs > 1,
 	(Direction = 'U', NewH is Horizontal, NewV is Vertical - PlayerDiscs;
 		Direction = 'D', NewH is Horizontal, NewV is Vertical + PlayerDiscs;
 		Direction = 'L', NewH is Horizontal - PlayerDiscs, NewV is Vertical;
