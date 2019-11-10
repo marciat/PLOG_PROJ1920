@@ -33,11 +33,11 @@ play:-
  * displays game, handles moves and checks if game has ended after every move
  */
 playGame(Board, Player):-
-	%displayGame(Board, Player, 0),
+	displayGame(Board, Player, 0),
 	gameOver(Board, Winner),
 	Winner == 0, !,
 	playerMove(Board, Board, Player, 0, NewBoard),
-	%displayGame(NewBoard, Player, 1),
+	displayGame(NewBoard, Player, 1),
 	gameOver(NewBoard, Winner),
 	Winner == 0, !,
 	playerMove(NewBoard, Board, Player, 1, FinalBoard),
@@ -86,7 +86,13 @@ playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
  * if it is not valid, asks for new input until a valid move is input
  */
 readMove(Board, Player, MoveNr, OriginalBoard, Move):-
-	write('Which disc do you want to move?'), nl, nl,
+	write('Do you want to move a disc (D) or a line of discs (L)? '),
+	get_char(Type),
+	get_char(_),
+	nl, nl,
+	(Type = 'D', write('Which disc do you want to move?');
+	Type = 'L', write('Coordinates of the first disc of the line:');
+	readMove(Board, Player, MoveNr, OriginalBoard, Move)), nl, nl,
 	write('Horizontal coord.: '),
 	get_code(H),
 	get_char(_),
@@ -99,7 +105,7 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	get_char(Direction),
 	get_char(_),
 	nl,
-	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], Valid),
+	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction, Type, 0], Valid),
 	(Valid == 1 -> Move = [OldH, OldV, Direction] ; 
 	(write('That is not a valid move. Please try again.'), nl, nl, readMove(Board, Player, MoveNr, OriginalBoard, Move))).
 
@@ -131,7 +137,8 @@ move(Move, Board, NewBoard):-
  */
 isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	[OldH, OldV | D] = Move,
-	[Direction | _] = D,
+	[Direction | T] = D,
+	[Type | _] = T,
 	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
 	Direction = 'D', NewH is OldH, NewV is OldV + 1;
 	Direction = 'L', NewH is OldH - 1, NewV is OldV;
@@ -139,10 +146,32 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	validCoords(Board, OldH, OldV, 1),
 	validCoords(Board, NewH, NewV, 1),
 	getPosition(Board, OldV, OldH, Player), !,
+	(Type = 'D', getPosition(Board, NewH, NewH, 0);
+	Type = 'L', validateLineMove(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], 1)),
 	Valid is 1.
 
 isPlayerMoveValid(_, _, _, _, _, Valid):-
 	Valid is 0.
+
+validateLineMove(Board, Player, OriginalBoard, MoveNr, MoveInfo, Valid):-
+	[Horizontal, Vertical | D] = MoveInfo,
+	[Direction | _] = D,
+	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
+	(NumberOfDiscs > 1,
+	(Direction = 'U', NewH is Horizontal, NewV is Vertical - PlayerDiscs;
+		Direction = 'D', NewH is Horizontal, NewV is Vertical + PlayerDiscs;
+		Direction = 'L', NewH is Horizontal - PlayerDiscs, NewV is Vertical;
+		Direction = 'R', NewH is Horizontal + PlayerDiscs, NewV is Vertical),
+	validCoords(Board, NewH, NewV, 1),
+	(getPosition(Board, NewH, NewV, 0);
+		Opponent is Player mod 2 + 1,
+		countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Opponent, OpponentDiscs), 
+		OpponentDiscs < PlayerDiscs),
+	Valid is 1;
+	Valid is 0).
+
+
+
 
 %validMoves(+Board, +Player, -ListOfMoves)
 

@@ -93,3 +93,24 @@ validCoords(Board, Horizontal, Vertical, Valid):-
 
 validCoords(_, _, _, Valid):-
 	Valid = 0.
+
+/* countLineOfDiscs(+Board, +StartingCoordinates, +Direction, +Disc, -NumberOfDiscs)
+ * Board - game board
+ * StartingCoordinates - first disc of the line
+ * Direction - direction of the line of discs
+ * Disc - type of disc that makes up the line
+ * NumberOfDiscs - number of discs in line
+ * counts the number of cells with the same content, from a starting cell and in a given direction
+ */
+countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
+	[H|V] = StartingCoordinates,
+	(Direction = 'U', NewH is H, NewV is V - 1;
+	Direction = 'D', NewH is H, NewV is V + 1;
+	Direction = 'L', NewH is H - 1, NewV is V;
+	Direction = 'R', NewH is H + 1, NewV is V),
+	(validCoords(Board, H, V, 1),
+	getPosition(Board, H, V, Content),
+	Content = Disc, countLineOfDiscs(Board, [NewH, NewV], Direction, Disc, NewNumber),
+	NumberOfDiscs is NewNumber + 1;
+	NumberOfDiscs is 0).
+
