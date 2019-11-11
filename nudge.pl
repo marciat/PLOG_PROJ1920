@@ -33,12 +33,12 @@ play:-
  */
 playGame(Board, Player):-
 	displayGame(Board, Player, 0),
-	gameOver(Board, Winner),
-	Winner == 0, !,
+	gameOver(Board, Winner1),
+	Winner1 = 0, !,
 	playerMove(Board, Board, Player, 0, NewBoard),
 	displayGame(NewBoard, Player, 1),
-	gameOver(NewBoard, Winner),
-	Winner == 0, !,
+	gameOver(NewBoard, Winner2),
+	Winner2 = 0, !,
 	playerMove(NewBoard, Board, Player, 1, FinalBoard),
 	NewPlayer is Player mod 2 + 1,
 	playGame(FinalBoard, NewPlayer).
@@ -59,7 +59,7 @@ gameOver(Board, Winner):-
 	countBoardPieces(Board, 2, Black),
 	(White > Black, Winner = 1;
 	Black > White, Winner = 2;
-	Winner = 0).
+	Black = White, Winner = 0).
 
 /* playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
  * Board - current board
@@ -187,8 +187,8 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	Direction = 'R', NewH is OldH + 1, NewV is OldV),
 	validCoords(Board, OldH, OldV, 1),
 	validCoords(Board, NewH, NewV, 1),
-	getPosition(Board, OldV, OldH, Player),
-	(Type = 'D', getPosition(Board, NewH, NewH, 0);
+	getPosition(Board, OldH, OldV, Player),
+	(Type = 'D', getPosition(Board, NewH, NewV, 0);
 	Type = 'L', validateLineMove(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], 1)),
 	Valid is 1);
 	Valid is 0.
