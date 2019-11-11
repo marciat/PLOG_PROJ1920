@@ -23,17 +23,30 @@ initBoard(Board):-
  * starts game */
 play:-
 	initBoard(Board),
-	playGame2(Board, 1).
+	playGame(Board, 1).
 
-playGame2(Board, Player):-
+/* playGame(+Board, +Player)
+ * Board - current game board
+ * Player - current player
+ * handles gameplay
+ * displays game, handles moves and checks if game has ended after every move
+ */
+playGame(Board, Player):-
 	displayGame(Board, Player, 0),
-	%write(Board), nl, nl,
-	playGame(Board, Board, Player, 0, NewBoard),
+	gameOver(Board, Winner1),
+	Winner1 = 0, !,
+	playerMove(Board, Board, Player, 0, NewBoard),
 	displayGame(NewBoard, Player, 1),
-	%write(Board), nl, nl,
-	playGame(NewBoard, Board, Player, 1, FinalBoard),
+	gameOver(NewBoard, Winner2),
+	Winner2 = 0, !,
+	playerMove(NewBoard, Board, Player, 1, FinalBoard),
 	NewPlayer is Player mod 2 + 1,
-	playGame2(FinalBoard, NewPlayer).
+	playGame(FinalBoard, NewPlayer).
+	
+% if the game has ended
+playGame(Board, _):-
+	gameOver(Board, Winner),
+	displayWinner(Winner).
 
 /* playGame(+Board, +Player)
  * Board - current game board
