@@ -113,3 +113,16 @@ countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 	NumberOfDiscs is NewNumber + 1;
 	NumberOfDiscs is 0).
 
+getCodeInput(Code, Valid):-
+	read_line(Codes),
+	length(Codes, 1),!,
+	[C|_] = Codes,
+	Code is C,
+	Valid is 1.
+
+getCodeInput(Code, Valid):-
+	Code is 0,
+	Valid is 0.
+	
+
+

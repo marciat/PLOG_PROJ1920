@@ -16,7 +16,7 @@ initBoard(Board):-
 	Board=[[0,0,0,0,0],
 	       [0,1,1,1,0],
 	       [0,0,0,0,0],
-	       [0,2,2,2,0],
+	       [0,2,0,2,0],
 	       [0,0,0,0,0]].
 
 /* play
@@ -85,28 +85,28 @@ playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
  * if it is not valid, asks for new input until a valid move is input
  */
 readMove(Board, Player, MoveNr, OriginalBoard, Move):-
-	write('Do you want to move a disc (D) or a line of discs (L)? '),
-	get_char(Type),
-	get_char(_),
+	(write('Do you want to move a disc (D) or a line of discs (L)? '),
+	getCodeInput(TypeCode, ValidType),
+	char_code(Type, TypeCode),
 	nl, nl,
-	(Type = 'D', write('Which disc do you want to move?');
-	Type = 'L', write('Coordinates of the first disc of the line:');
-	readMove(Board, Player, MoveNr, OriginalBoard, Move)),
+	(ValidType = 1, Type = 'D', write('Which disc do you want to move?');
+	ValidType = 1, Type = 'L', write('Coordinates of the first disc of the line:')),
 	nl, nl,
 	write('Horizontal coord.: '),
-	get_code(H),
-	get_char(_),
+	getCodeInput(H, ValidH),
+	ValidH = 1,
 	OldH is H - 64,
 	nl, write('Vertical coord.: '),
-	get_code(V),
-	get_char(_),
+	getCodeInput(V, ValidV),
+	ValidV = 1,
 	OldV is V - 48,
 	nl, write('Direction (Up - U, Down - D, Left - L, Right - R): '),
-	get_char(Direction),
-	get_char(_),
+	getCodeInput(DirCode, ValidDir),
+	char_code(Direction, DirCode),
 	nl,
+	ValidDir = 1,
 	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction, Type], Valid),
-	(Valid = 1, Move = [OldH, OldV, Direction, Type] ;
+	Valid = 1, Move = [OldH, OldV, Direction, Type] ;
 	write('That is not a valid move. Please try again.'), nl, nl,
 	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
 
@@ -139,6 +139,24 @@ simpleMove(Move, Board, NewBoard):-
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
 
+
+incrementPosition('U', [H,V|_], Increment, NewH, NewV):-
+	NewH is H,
+	NewV is V - Increment.
+
+incrementPosition('D', [H,V|_], Increment, NewH, NewV):-
+	NewH is H,
+	NewV is V + Increment.
+
+incrementPosition('L', [H,V|_], Increment, NewH, NewV):-
+	NewH is H - Increment,
+	NewV is V.
+
+incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
+	NewH is H + Increment,
+	NewV is V.
+
+
 /* multipleMove(+Move, +Board, -NewBoard)
  * Move - information about the move
  *        list with coordinates of disc and direction to move it
@@ -151,20 +169,14 @@ multipleMove(Move, Board, NewBoard):-
 	[Direction | _] = D,
 	getPosition(Board, OldH, OldV, Player),
 	countLineOfDiscs(Board, [OldH, OldV], Direction, Player, PlayerDiscs),
-	(Direction = 'U', NewH is OldH, NewV is OldV - PlayerDiscs;
-		Direction = 'D', NewH is OldH, NewV is OldV + PlayerDiscs;
-		Direction = 'L', NewH is OldH - PlayerDiscs, NewV is OldV;
-		Direction = 'R', NewH is OldH + PlayerDiscs, NewV is OldV),
+	incrementPosition(Direction, [OldH, OldV], PlayerDiscs, NewH, NewV),
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	getPosition(Board, NewH, NewV, Opponent),
 	(Opponent = 0, TmpBoard2 = TmpBoard;
-		countLineOfDiscs(Board, [OldH, OldV], Direction, Opponent, OpponentDiscs),
-		(Direction = 'U', OpponentH is NewH, OpponentV is NewV - OpponentDiscs;
-			Direction = 'D', OpponentH is NewH, OpponentV is NewV + OpponentDiscs;
-			Direction = 'L', OpponentH is NewH - OpponentDiscs, OpponentV is NewV;
-			Direction = 'R', OpponentH is NewH + OpponentDiscs, OpponentV is NewV),
+		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs),
+		incrementPosition(Direction, [NewH, NewV], OpponentDiscs, OpponentH, OpponentV),
 		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2);
-		repeat)),
+		true)),
 	setPosition(TmpBoard2, NewH, NewV, Player, NewBoard).
 
 
