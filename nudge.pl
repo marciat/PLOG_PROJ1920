@@ -14,7 +14,7 @@ black discs - 2
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
 	Board=[[0,0,0,0,0],
-	       [0,1,1,1,0],
+	       [2,1,1,1,0],
 	       [0,0,0,0,0],
 	       [0,2,0,2,0],
 	       [0,0,0,0,0]].
@@ -23,25 +23,28 @@ initBoard(Board):-
  * starts game */
 play:-
 	initBoard(Board),
-	playGame(Board, 1).
+	playGame2(Board, 1).
+
+playGame2(Board, Player):-
+	displayGame(Board, Player, 0),
+	%write(Board), nl, nl,
+	playGame(Board, Board, Player, 0, NewBoard),
+	displayGame(NewBoard, Player, 1),
+	%write(Board), nl, nl,
+	playGame(NewBoard, Board, Player, 1, FinalBoard),
+	NewPlayer is Player mod 2 + 1,
+	playGame2(FinalBoard, NewPlayer).
 
 /* playGame(+Board, +Player)
  * Board - current game board
  * Player - current player
- * handles gameplay
+ * handles gameplay 
  * displays game, handles moves and checks if game has ended after every move
  */
-playGame(Board, Player):-
-	displayGame(Board, Player, 0),
-	gameOver(Board, Winner1),
-	Winner1 = 0, !,
-	playerMove(Board, Board, Player, 0, NewBoard),
-	displayGame(NewBoard, Player, 1),
-	gameOver(NewBoard, Winner2),
-	Winner2 = 0, !,
-	playerMove(NewBoard, Board, Player, 1, FinalBoard),
-	NewPlayer is Player mod 2 + 1,
-	playGame(FinalBoard, NewPlayer).
+playGame(Board, OriginalBoard, Player, Move, NewBoard):-
+	gameOver(Board, Winner),
+	Winner = 0, !,
+	playerMove(Board, OriginalBoard, Player, Move, NewBoard).
 	
 % if the game has ended
 playGame(Board, _):-
@@ -172,12 +175,11 @@ multipleMove(Move, Board, NewBoard):-
 	incrementPosition(Direction, [OldH, OldV], PlayerDiscs, NewH, NewV),
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	getPosition(Board, NewH, NewV, Opponent),
-	(Opponent = 0, TmpBoard2 = TmpBoard;
+	(Opponent = 0, setPosition(TmpBoard, NewH, NewV, Player, NewBoard);
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs),
 		incrementPosition(Direction, [NewH, NewV], OpponentDiscs, OpponentH, OpponentV),
-		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2);
-		true)),
-	setPosition(TmpBoard2, NewH, NewV, Player, NewBoard).
+		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
+		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
 
 /* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
