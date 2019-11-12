@@ -94,9 +94,9 @@ printCell([]).
 
 % print symbol associated to cell content
 printCell(C):-
-	%symbol(C,S),
+	symbol(C,S),
 	write(' '),
-	write(C),
+	write(S),
 	write(' ').
 
 

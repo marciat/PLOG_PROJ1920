@@ -14,23 +14,56 @@ black discs - 2
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
 	Board=[[0,0,0,0,0],
-	       [2,1,1,1,0],
+	       [0,1,1,1,0],
 	       [0,0,0,0,0],
-	       [0,2,0,2,0],
+	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
 /* play
  * starts game */
 play:-
 	initBoard(Board),
-	playGame(Board, 1).
+	game(Board, Board, 1, 0, 0).
 
-/* playGame(+Board, +Player)
- * Board - current game board
- * Player - current player
- * handles gameplay
- * displays game, handles moves and checks if game has ended after every move
- */
+
+game(_, _, _, _, 1):-
+	displayWinner(1).
+
+game(_, _, _, _, 2):-
+	displayWinner(2).
+
+game(Board, OriginalBoard, Player, 0, _):-
+	displayGame(Board, Player, 0),
+	gameOver(Board, Winner1),
+	playGame(Board, OriginalBoard, Player, 0, Winner1, NewBoard, NewPlayer),
+	game(NewBoard, OriginalBoard, NewPlayer, 1, Winner1).
+
+game(Board, OriginalBoard, Player, 1, _):-
+	displayGame(Board, Player, 1),
+	gameOver(Board, Winner1),
+	playGame(Board, OriginalBoard, Player, 1, Winner1, NewBoard, NewPlayer),
+	game(NewBoard, NewBoard, NewPlayer, 0, Winner1).
+
+playGame(_, _, _, _, 1, _, _).
+	
+playGame(_, _, _, _, 2, _, _).
+
+playGame(Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
+	playerMove(Board, OriginalBoard, 1, 0, NewBoard),
+	NewPlayer is 1.
+
+playGame(Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
+	playerMove(Board, OriginalBoard, 1, 1, NewBoard),
+	NewPlayer is 2.
+
+playGame(Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
+	playerMove(Board, OriginalBoard, 2, 0, NewBoard),
+	NewPlayer is 2.
+
+playGame(Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
+	playerMove(Board, OriginalBoard, 2, 1, NewBoard),
+	NewPlayer is 1.
+/*
 playGame(Board, Player):-
 	displayGame(Board, Player, 0),
 	gameOver(Board, Winner1),
@@ -47,7 +80,7 @@ playGame(Board, Player):-
 playGame(Board, _):-
 	gameOver(Board, Winner),
 	displayWinner(Winner).
-
+*/
 /* playGame(+Board, +Player)
  * Board - current game board
  * Player - current player
@@ -137,24 +170,6 @@ move(Move, Board, NewBoard):-
 	(Type = 'D', simpleMove(Move, Board, NewBoard);
 	Type = 'L', multipleMove(Move, Board, NewBoard)).
 
-/* simpleMove(+Move, +Board, -NewBoard)
- * Move - information about the move
- *        list with coordinates of disc and direction to move it
- * Board - current game board (before move is applied)
- * NewBoard - new game board (after move is applied)
- * moves a single disc
- */
-simpleMove(Move, Board, NewBoard):-
-	[OldH, OldV | D] = Move,
-	[Direction | _] = D,
-	(Direction = 'U', NewH is OldH, NewV is OldV - 1;
-	Direction = 'D', NewH is OldH, NewV is OldV + 1;
-	Direction = 'L', NewH is OldH - 1, NewV is OldV;
-	Direction = 'R', NewH is OldH + 1, NewV is OldV),
-	getPosition(Board, OldH, OldV, Player),
-	setPosition(Board, OldH, OldV, 0, TmpBoard),
-	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
-
 
 incrementPosition('U', [H,V|_], Increment, NewH, NewV):-
 	NewH is H,
@@ -171,6 +186,21 @@ incrementPosition('L', [H,V|_], Increment, NewH, NewV):-
 incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
 	NewH is H + Increment,
 	NewV is V.
+
+/* simpleMove(+Move, +Board, -NewBoard)
+ * Move - information about the move
+ *        list with coordinates of disc and direction to move it
+ * Board - current game board (before move is applied)
+ * NewBoard - new game board (after move is applied)
+ * moves a single disc
+ */
+simpleMove(Move, Board, NewBoard):-
+	[OldH, OldV | D] = Move,
+	[Direction | _] = D,
+	incrementPosition(Direction, [OldH, OldV], 1, NewH, NewV),
+	getPosition(Board, OldH, OldV, Player),
+	setPosition(Board, OldH, OldV, 0, TmpBoard),
+	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
 
 
 /* multipleMove(+Move, +Board, -NewBoard)
@@ -208,10 +238,7 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
-	((Direction = 'U', NewH is OldH, NewV is OldV - 1;
-	Direction = 'D', NewH is OldH, NewV is OldV + 1;
-	Direction = 'L', NewH is OldH - 1, NewV is OldV;
-	Direction = 'R', NewH is OldH + 1, NewV is OldV),
+	(incrementPosition(Direction, [OldH, OldV], 1, NewH, NewV),
 	validCoords(Board, OldH, OldV, 1),
 	validCoords(Board, NewH, NewV, 1),
 	getPosition(Board, OldH, OldV, Player),
@@ -228,10 +255,7 @@ validateLineMove(Board, Player, OriginalBoard, MoveNr, MoveInfo, Valid):-
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
 	(PlayerDiscs > 1,
-	(Direction = 'U', NewH is Horizontal, NewV is Vertical - PlayerDiscs;
-		Direction = 'D', NewH is Horizontal, NewV is Vertical + PlayerDiscs;
-		Direction = 'L', NewH is Horizontal - PlayerDiscs, NewV is Vertical;
-		Direction = 'R', NewH is Horizontal + PlayerDiscs, NewV is Vertical),
+	incrementPosition(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV),
 	validCoords(Board, NewH, NewV, 1),
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
