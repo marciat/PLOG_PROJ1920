@@ -248,8 +248,8 @@ validateLineMove(Board, Player, MoveInfo, Valid):-
 	Valid is 0).
 
 checkResetBoard(Board, OriginalBoard, Move, Valid):-
-	move(Move, Board, NewBoard),
-	NewBoard \= OriginalBoard, !,
+	move(Move, Board, NewBoard), !,
+	NewBoard \= OriginalBoard,
 	Valid = 1.
 
 checkResetBoard(_, _, _, Valid):-
