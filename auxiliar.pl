@@ -103,15 +103,15 @@ validCoords(_, _, _, Valid):-
  */
 countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 	[H,V|_] = StartingCoordinates,
-	(Direction = 'U', NewH is H, NewV is V - 1;
-	Direction = 'D', NewH is H, NewV is V + 1;
-	Direction = 'L', NewH is H - 1, NewV is V;
-	Direction = 'R', NewH is H + 1, NewV is V),
-	(validCoords(Board, H, V, 1),
+	incrementPosition(Direction, [H, V], 1, NewH, NewV),
+	validCoords(Board, H, V, 1),	
 	getPosition(Board, H, V, Content),
-	Content = Disc, countLineOfDiscs(Board, [NewH, NewV], Direction, Disc, NewNumber),
-	NumberOfDiscs is NewNumber + 1;
-	NumberOfDiscs is 0).
+	Content = Disc, 
+	countLineOfDiscs(Board, [NewH, NewV], Direction, Disc, NewNumber),
+	NumberOfDiscs is NewNumber + 1.
+
+countLineOfDiscs(_, _, _, _, NumberOfDiscs):-
+	NumberOfDiscs is 0.
 
 getCodeInput(Code, Valid):-
 	read_line(Codes),

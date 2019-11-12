@@ -63,24 +63,7 @@ playGame(Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
 playGame(Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
 	playerMove(Board, OriginalBoard, 2, 1, NewBoard),
 	NewPlayer is 1.
-/*
-playGame(Board, Player):-
-	displayGame(Board, Player, 0),
-	gameOver(Board, Winner1),
-	Winner1 = 0, !,
-	playerMove(Board, Board, Player, 0, NewBoard),
-	displayGame(NewBoard, Player, 1),
-	gameOver(NewBoard, Winner2),
-	Winner2 = 0, !,
-	playerMove(NewBoard, Board, Player, 1, FinalBoard),
-	NewPlayer is Player mod 2 + 1,
-	playGame(FinalBoard, NewPlayer).
-	
-% if the game has ended
-playGame(Board, _):-
-	gameOver(Board, Winner),
-	displayWinner(Winner).
-*/
+
 /* playGame(+Board, +Player)
  * Board - current game board
  * Player - current player
@@ -224,7 +207,6 @@ multipleMove(Move, Board, NewBoard):-
 		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
 		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
-
 /* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
  * Board - current game board
  * Player - current player
@@ -242,15 +224,16 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	validCoords(Board, OldH, OldV, 1),
 	validCoords(Board, NewH, NewV, 1),
 	getPosition(Board, OldH, OldV, Player),
+	checkResetBoard(Board, OriginalBoard, Move, 1),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
-	Type = 'L', validateLineMove(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction], 1)),
+	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction], 1)),
 	Valid is 1);
 	Valid is 0.
 
 isPlayerMoveValid(_, _, _, _, _, Valid):-
 	Valid is 0.
 
-validateLineMove(Board, Player, OriginalBoard, MoveNr, MoveInfo, Valid):-
+validateLineMove(Board, Player, MoveInfo, Valid):-
 	[Horizontal, Vertical | D] = MoveInfo,
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
@@ -264,10 +247,10 @@ validateLineMove(Board, Player, OriginalBoard, MoveNr, MoveInfo, Valid):-
 	Valid is 1;
 	Valid is 0).
 
+checkResetBoard(Board, OriginalBoard, Move, Valid):-
+	move(Move, Board, NewBoard),
+	NewBoard \= OriginalBoard, !,
+	Valid = 1.
 
-
-
-%validMoves(+Board, +Player, -ListOfMoves)
-
-
-
+checkResetBoard(_, _, _, Valid):-
+	Valid = 0.
