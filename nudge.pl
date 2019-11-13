@@ -14,7 +14,7 @@ black discs - 2
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
 	Board=[[0,0,0,0,0],
-	       [0,0,1,1,1],
+	       [0,1,1,1,0],
 	       [0,0,0,0,0],
 	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
@@ -23,62 +23,64 @@ initBoard(Board):-
  * starts game */
 play:-
 	initBoard(Board),
-	game(Board, Board, 1, 0, 0).
+	readGameMode(Mode),
+	game(Mode, Board, Board, 1, 0, 0).
 
 
-game(_, _, _, _, 1):-
+readGameMode(Mode):-
+	write('GAME MODE'), nl,
+	write('1 - Player vs Player'), nl,
+	write('2 - CPU vs CPU'), nl,
+	write('3 - Player vs CPU'),
+	repeat,
+	nl,nl,
+	write('Mode (insert number): '),
+	getCodeInput(GameMode, 1), !,
+	Mode is GameMode - 48.
+
+
+game(_, _, _, _, _, 1):-
 	displayWinner(1).
 
-game(_, _, _, _, 2):-
+game(_, _, _, _, _, 2):-
 	displayWinner(2).
 
-game(Board, OriginalBoard, Player, 0, _):-
+game(Mode, Board, OriginalBoard, Player, 0, _):-
 	displayGame(Board, Player, 0),
 	gameOver(Board, Winner1),
-	playGame(Board, OriginalBoard, Player, 0, Winner1, NewBoard, NewPlayer),
-	game(NewBoard, OriginalBoard, NewPlayer, 1, Winner1).
+	playGame(Mode, Board, OriginalBoard, Player, 0, Winner1, NewBoard, NewPlayer),
+	game(Mode, NewBoard, OriginalBoard, NewPlayer, 1, Winner1).
 
-game(Board, OriginalBoard, Player, 1, _):-
+game(Mode, Board, OriginalBoard, Player, 1, _):-
 	displayGame(Board, Player, 1),
 	gameOver(Board, Winner1),
-	playGame(Board, OriginalBoard, Player, 1, Winner1, NewBoard, NewPlayer),
-	game(NewBoard, NewBoard, NewPlayer, 0, Winner1).
+	playGame(Mode, Board, OriginalBoard, Player, 1, Winner1, NewBoard, NewPlayer),
+	game(Mode, NewBoard, NewBoard, NewPlayer, 0, Winner1).
 
-playGame(_, _, _, _, 1, _, _).
+playGame(_, _, _, _, _, 1, _, _).
 	
-playGame(_, _, _, _, 2, _, _).
+playGame(_, _, _, _, _, 2, _, _).
 
-playGame(Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
-	playerMove(Board, OriginalBoard, 1, 0, NewBoard),
+playGame(Mode, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
+	(Mode = 2, moveAILevel1(Board, 1, OriginalBoard, NewBoard);
+	playerMove(Board, OriginalBoard, 1, 0, NewBoard)),
 	NewPlayer is 1.
 
-playGame(Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
-	playerMove(Board, OriginalBoard, 1, 1, NewBoard),
+playGame(Mode, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
+	(Mode = 2, moveAILevel1(Board, 1, OriginalBoard, NewBoard);
+	playerMove(Board, OriginalBoard, 1, 1, NewBoard)),
 	NewPlayer is 2.
 
-playGame(Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
-	playerMove(Board, OriginalBoard, 2, 0, NewBoard),
+playGame(Mode, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
+	(Mode = 1, playerMove(Board, OriginalBoard, 2, NewBoard);
+	moveAILevel1(Board, 2, OriginalBoard, 0, NewBoard)),
 	NewPlayer is 2.
 
-playGame(Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
-	playerMove(Board, OriginalBoard, 2, 1, NewBoard),
+playGame(Mode, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
+	(Mode = 1, playerMove(Board, OriginalBoard, 2, NewBoard);
+	moveAILevel1(Board, 2, OriginalBoard, 1, NewBoard)),
 	NewPlayer is 1.
-
-/* playGame(+Board, +Player)
- * Board - current game board
- * Player - current player
- * handles gameplay 
- * displays game, handles moves and checks if game has ended after every move
- */
-playGame(Board, OriginalBoard, Player, Move, NewBoard):-
-	gameOver(Board, Winner),
-	Winner = 0, !,
-	playerMove(Board, OriginalBoard, Player, Move, NewBoard).
 	
-% if the game has ended
-playGame(Board, _):-
-	gameOver(Board, Winner),
-	displayWinner(Winner).
 
 /* gameOver(+Board, -Winner)
  * Board - game board
@@ -137,7 +139,7 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	char_code(Direction, DirCode),
 	nl,
 	ValidDir = 1,
-	isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, [OldH, OldV, Direction, Type], Valid),
+	isPlayerMoveValid(Board, Player, OriginalBoard, [OldH, OldV, Direction, Type], Valid),
 	Valid = 1, Move = [OldH, OldV, Direction, Type] ;
 	write('That is not a valid move. Please try again.'), nl, nl,
 	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
@@ -155,20 +157,20 @@ move(Move, Board, NewBoard):-
 
 
 incrementPosition('U', [H,V|_], Increment, NewH, NewV):-
-	NewH is H,
-	NewV is V - Increment.
+	NewH = H,
+	NewV = V - Increment.
 
 incrementPosition('D', [H,V|_], Increment, NewH, NewV):-
-	NewH is H,
-	NewV is V + Increment.
+	NewH = H,
+	NewV = V + Increment.
 
 incrementPosition('L', [H,V|_], Increment, NewH, NewV):-
-	NewH is H - Increment,
-	NewV is V.
+	NewH = H - Increment,
+	NewV = V.
 
 incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
-	NewH is H + Increment,
-	NewV is V.
+	NewH = H + Increment,
+	NewV = V.
 
 /* simpleMove(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -207,16 +209,15 @@ multipleMove(Move, Board, NewBoard):-
 		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
 		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
-/* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +MoveNr, +Move, -Valid)
+/* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +Move, -Valid)
  * Board - current game board
  * Player - current player
  * Original Board - game board in the beginning of player's turn
- * MoveNr - current move of the player's turn (first or second)
  * Move - information about the move
  *        list with coordinates of disc and direction to move it
  * Valid - 1 if move is valid and 0 if it is not
  */
-isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
+isPlayerMoveValid(Board, Player, OriginalBoard, Move, Valid):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
@@ -230,7 +231,7 @@ isPlayerMoveValid(Board, Player, OriginalBoard, MoveNr, Move, Valid):-
 	Valid is 1);
 	Valid is 0.
 
-isPlayerMoveValid(_, _, _, _, _, Valid):-
+isPlayerMoveValid(_, _, _, _, Valid):-
 	Valid is 0.
 
 validateLineMove(Board, Player, MoveInfo, Valid):-
@@ -254,3 +255,11 @@ checkResetBoard(Board, OriginalBoard, Move, Valid):-
 
 checkResetBoard(_, _, _, Valid):-
 	Valid = 0.
+
+validMoves(Board, Player, OriginalBoard, ListOfMoves):-
+	findall(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
+
+moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
+	validMoves(Board, Player, OriginalBoard, ListOfMoves),
+	random_member(Move, ListOfMoves),
+	move(Move, Board, NewBoard).
