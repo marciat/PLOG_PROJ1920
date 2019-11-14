@@ -86,12 +86,30 @@ getBoardDimensions(Board, Lines, Columns):-
  * checks if coordinates are valid for a board, that is, if they are within board boundaries
  */
 validCoords(Board, Horizontal, Vertical, Valid):-
-	getBoardDimensions(Board, Lines, Columns),
-	(Horizontal > 0, Vertical > 0, Horizontal =< Columns, Vertical =< Lines), !,
-	Valid = 1.
+	getBoardDimensions(Board, MaxV, MaxH),
+	(checkHorizontalRecursive(MaxH, Horizontal, 1),
+	checkVerticalRecursive(MaxV, Vertical, 1),
+	Valid = 1;
+	Valid = 0).
 
-validCoords(_, _, _, Valid):-
-	Valid = 0.
+validCoords(_, _, _, 0).
+
+checkHorizontalRecursive(1, 1, 1).
+
+checkHorizontalRecursive(1, _, 0).
+
+checkHorizontalRecursive(MaxH, Horizontal, Valid):-
+	(MaxH = Horizontal, Valid = 1;
+	NewMax is MaxH - 1, checkHorizontalRecursive(NewMax, Horizontal, Valid)).
+
+checkVerticalRecursive(1, 1, 1).
+
+checkVerticalRecursive(1, _, 0).
+
+checkVerticalRecursive(MaxV, Vertical, Valid):-
+	(MaxV = Vertical, Valid = 1;
+	NewMax is MaxV - 1, checkVerticalRecursive(NewMax, Vertical, Valid)).
+
 
 /* countLineOfDiscs(+Board, +StartingCoordinates, +Direction, +Disc, -NumberOfDiscs)
  * Board - game board

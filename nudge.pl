@@ -158,18 +158,18 @@ move(Move, Board, NewBoard):-
 
 incrementPosition('U', [H,V|_], Increment, NewH, NewV):-
 	NewH = H,
-	NewV = V - Increment.
+	NewV is V - Increment.
 
 incrementPosition('D', [H,V|_], Increment, NewH, NewV):-
 	NewH = H,
-	NewV = V + Increment.
+	NewV is V + Increment.
 
 incrementPosition('L', [H,V|_], Increment, NewH, NewV):-
-	NewH = H - Increment,
+	NewH is H - Increment,
 	NewV = V.
 
 incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
-	NewH = H + Increment,
+	NewH is H + Increment,
 	NewV = V.
 
 /* simpleMove(+Move, +Board, -NewBoard)
@@ -231,8 +231,7 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move, Valid):-
 	Valid is 1);
 	Valid is 0.
 
-isPlayerMoveValid(_, _, _, _, Valid):-
-	Valid is 0.
+isPlayerMoveValid(_, _, _, _, 0).
 
 validateLineMove(Board, Player, MoveInfo, Valid):-
 	[Horizontal, Vertical | D] = MoveInfo,
@@ -257,7 +256,7 @@ checkResetBoard(_, _, _, Valid):-
 	Valid = 0.
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	findall(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
+	findall([Horizontal, Vertical, Direction, Type], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, Type], 1), ListOfMoves).
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
