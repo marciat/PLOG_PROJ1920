@@ -14,10 +14,10 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[2,2,0,0,0],
-	       [2,1,1,0,0],
-	       [1,0,0,0,0],
+	Board=[[0,0,0,0,0],
+	       [0,1,1,1,0],
 	       [0,0,0,0,0],
+	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
 /* play
@@ -25,7 +25,7 @@ initBoard(Board):-
 play:-
 	initBoard(Board),
 	readGameMode(Mode),
-	game(Mode, Board, Board, 2, 1, 0).
+	game(Mode, Board, Board, 2, 0, 0).
 
 
 readGameMode(Mode):-
@@ -290,7 +290,7 @@ validateLineMove(Board, Player, MoveInfo, Valid):-
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
 	(PlayerDiscs > 1,
-	positionFromDirection(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV),
+	positionFromDirection(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV), !,
 	validCoords(Board, NewH, NewV),
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
@@ -308,7 +308,10 @@ checkResetBoard(_, _, _, Valid):-
 	Valid = 0.
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	findall(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
+	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D'], 1), ListOfMovesD),
+	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L'], 1), ListOfMovesL),
+	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
+
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
