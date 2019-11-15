@@ -72,12 +72,12 @@ playGame(Mode, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
 	NewPlayer is 2.
 
 playGame(Mode, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
-	(Mode = 1, playerMove(Board, OriginalBoard, 2, NewBoard);
+	(Mode = 1, playerMove(Board, OriginalBoard, 2, 0, NewBoard);
 	moveAILevel1(Board, 2, OriginalBoard, 0, NewBoard)),
 	NewPlayer is 2.
 
 playGame(Mode, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
-	(Mode = 1, playerMove(Board, OriginalBoard, 2, NewBoard);
+	(Mode = 1, playerMove(Board, OriginalBoard, 2, 1, NewBoard);
 	moveAILevel1(Board, 2, OriginalBoard, 1, NewBoard)),
 	NewPlayer is 1.
 	
@@ -155,22 +155,60 @@ move(Move, Board, NewBoard):-
 	(Type = 'D', simpleMove(Move, Board, NewBoard);
 	Type = 'L', multipleMove(Move, Board, NewBoard)).
 
+/*incrementPosition('U', [H,Increment|_], 0, H, Increment, [0, H]).
 
-incrementPosition('U', [H,V|_], Increment, NewH, NewV):-
-	NewH = H,
-	NewV is V - Increment.
+incrementPosition('D', [H,0|_], Increment, H, Increment, [H, ]).
 
-incrementPosition('D', [H,V|_], Increment, NewH, NewV):-
-	NewH = H,
-	NewV is V + Increment.
+incrementPosition('L', [Increment,V|_], Increment, 0, V).
 
-incrementPosition('L', [H,V|_], Increment, NewH, NewV):-
-	NewH is H - Increment,
-	NewV = V.
+incrementPosition('R', [0,V|_], Increment, Increment, V).*/
+/*///////////////////////////////////////////////*/
 
-incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
-	NewH is H + Increment,
-	NewV = V.
+%incrementPosition(+Direction, +Coordinates, +Increment, +Candidates, -Final)
+
+incrementPosition('U', [H,Increment|_], Increment, _, [H,0]).
+
+incrementPosition('U', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
+	(CH =:= H, CV =:= V - Increment, !, FH = CH, FV = CV;
+	NewCV is CV-1,
+	NewCH = H,
+	incrementPosition('U', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
+
+
+incrementPosition('D', [H,0|_], Increment, _, [H,Increment]).
+
+incrementPosition('D', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
+	(CH =:= H, CV =:= V + Increment, !, FH = CH, FV = CV;
+	NewCV is CV+1,
+	NewCH = H,
+	incrementPosition('D', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
+
+
+incrementPosition('L', [Increment,V|_], Increment, _, [0,V]).
+
+incrementPosition('L', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
+	(CH =:= H - Increment, CV =:= V, !, FH = CH, FV = CV;
+	NewCH is CH-1,
+	NewCV = V,
+	incrementPosition('L', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
+
+
+incrementPosition('R', [0,V|_], Increment, _, [Increment,V]).
+
+incrementPosition('R', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
+	(CH =:= H + Increment, CV =:= V, !, FH = CH, FV = CV;
+	NewCH is CH+1,
+	NewCV = V,
+	incrementPosition('R', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
+
+
+positionFromDirection(Direction, Coordinates, Increment, NewH, NewV):-
+	[H,V|_] = Coordinates,
+	incrementPosition(Direction, Coordinates, Increment, [H, V], [FH, FV]),
+	NewH = FH,
+	NewV = FV.
+	
+
 
 /* simpleMove(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -182,7 +220,7 @@ incrementPosition('R', [H,V|_], Increment, NewH, NewV):-
 simpleMove(Move, Board, NewBoard):-
 	[OldH, OldV | D] = Move,
 	[Direction | _] = D,
-	incrementPosition(Direction, [OldH, OldV], 1, NewH, NewV),
+	positionFromDirection(Direction, [OldH, OldV], 1, NewH, NewV),
 	getPosition(Board, OldH, OldV, Player),
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	setPosition(TmpBoard, NewH, NewV, Player, NewBoard).
@@ -200,12 +238,12 @@ multipleMove(Move, Board, NewBoard):-
 	[Direction | _] = D,
 	getPosition(Board, OldH, OldV, Player),
 	countLineOfDiscs(Board, [OldH, OldV], Direction, Player, PlayerDiscs),
-	incrementPosition(Direction, [OldH, OldV], PlayerDiscs, NewH, NewV),
+	positionFromDirection(Direction, [OldH, OldV], PlayerDiscs, NewH, NewV),
 	setPosition(Board, OldH, OldV, 0, TmpBoard),
 	getPosition(Board, NewH, NewV, Opponent),
 	(Opponent = 0, setPosition(TmpBoard, NewH, NewV, Player, NewBoard);
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs),
-		incrementPosition(Direction, [NewH, NewV], OpponentDiscs, OpponentH, OpponentV),
+		positionFromDirection(Direction, [NewH, NewV], OpponentDiscs, OpponentH, OpponentV),
 		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
 		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
@@ -221,10 +259,11 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move, Valid):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
-	(incrementPosition(Direction, [OldH, OldV], 1, NewH, NewV),
 	validCoords(Board, OldH, OldV, 1),
+	getPosition(Board, OldH, OldV, CellContent),
+	CellContent = Player,
+	(positionFromDirection(Direction, [OldH, OldV], 1, NewH, NewV),
 	validCoords(Board, NewH, NewV, 1),
-	getPosition(Board, OldH, OldV, Player),
 	checkResetBoard(Board, OriginalBoard, Move, 1),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
 	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction], 1)),
@@ -238,7 +277,7 @@ validateLineMove(Board, Player, MoveInfo, Valid):-
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
 	(PlayerDiscs > 1,
-	incrementPosition(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV), !,
+	positionFromDirection(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV),
 	validCoords(Board, NewH, NewV, 1),
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
@@ -256,7 +295,7 @@ checkResetBoard(_, _, _, Valid):-
 	Valid = 0.
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	findall([Horizontal, Vertical, Direction, Type], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, Type], 1), ListOfMoves).
+	bagof(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
