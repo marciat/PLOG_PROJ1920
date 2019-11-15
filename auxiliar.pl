@@ -84,37 +84,32 @@ getBoardDimensions(Board, Lines, Columns):-
  * Valid - 1 if coordinates are valid, 0 if they are not
  * checks if coordinates are valid for a board, that is, if they are within board boundaries
  */
-validCoords(Board, Horizontal, Vertical, 1):-
+validCoords(Board, Horizontal, Vertical):-
 	getBoardDimensions(Board, MaxV, MaxH),
-	checkHorizontalRecursive(MaxH, Horizontal, ValidH),
-	checkVerticalRecursive(MaxV, Vertical, ValidV), !,
-	ValidH = 1, ValidV = 1.
+	checkHorizontalRecursive(MaxH, Horizontal),
+	checkVerticalRecursive(MaxV, Vertical).
 
-validCoords(_, _, _, 0).
+checkHorizontalRecursive(0, _):- !,fail.
 
-checkHorizontalRecursive(1, 1, 1).
-
-checkHorizontalRecursive(1, _, 0).
-
-checkHorizontalRecursive(0, _, 0).
-
-checkHorizontalRecursive(MaxH, Horizontal, 1):-
+checkHorizontalRecursive(MaxH, Horizontal):-
 	MaxH = Horizontal.
 
-checkHorizontalRecursive(MaxH, Horizontal, Valid):-
-	NewMax is MaxH - 1, !, checkHorizontalRecursive(NewMax, Horizontal, Valid).
+checkHorizontalRecursive(MaxH, Horizontal):-
+	NewMax is MaxH - 1, !, checkHorizontalRecursive(NewMax, Horizontal).
 
-checkVerticalRecursive(1, 1, 1).
+checkHorizontalRecursive(1, 1).
 
-checkVerticalRecursive(1, _, 0).
+checkVerticalRecursive(0, _):- !,fail.
 
-checkVerticalRecursive(0, _, 0).
-
-checkVerticalRecursive(MaxV, Vertical, 1):-
+checkVerticalRecursive(MaxV, Vertical):-
 	MaxV = Vertical.
 
-checkVerticalRecursive(MaxV, Vertical, Valid):-
-	NewMax is MaxV - 1, !, checkVerticalRecursive(NewMax, Vertical, Valid).
+checkVerticalRecursive(MaxV, Vertical):-
+	NewMax is MaxV - 1, !, checkVerticalRecursive(NewMax, Vertical).
+
+checkVerticalRecursive(1, 1).
+
+
 
 
 /* countLineOfDiscs(+Board, +StartingCoordinates, +Direction, +Disc, -NumberOfDiscs)
@@ -127,7 +122,7 @@ checkVerticalRecursive(MaxV, Vertical, Valid):-
  */
 countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 	([H,V|_] = StartingCoordinates,
-	validCoords(Board, H, V, 1),
+	validCoords(Board, H, V),
 	positionFromDirection(Direction, [H, V], 1, NewH, NewV),
 	getPosition(Board, H, V, Content),
 	Content = Disc,
@@ -137,13 +132,11 @@ countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 
 %countLineOfDiscs(_, _, _, _, 0).
 
-getCodeInput(Code, 1):-
+getCodeInput(Code):-
 	read_line(Codes),
-	length(Codes, 1),!,
+	length(Codes, 1),
 	[C|_] = Codes,
 	Code is C.
-
-getCodeInput(0, 0).
 	
 
 

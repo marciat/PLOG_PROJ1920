@@ -1,5 +1,6 @@
 
 :- use_module(library(lists)).
+:- use_module(library(random)).
 :- include('view.pl').
 :- include('auxiliar.pl').
 
@@ -13,10 +14,10 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[0,0,0,0,0],
-	       [0,1,1,1,0],
+	Board=[[2,2,0,0,0],
+	       [2,1,1,0,0],
+	       [1,0,0,0,0],
 	       [0,0,0,0,0],
-	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
 /* play
@@ -24,7 +25,7 @@ initBoard(Board):-
 play:-
 	initBoard(Board),
 	readGameMode(Mode),
-	game(Mode, Board, Board, 1, 0, 0).
+	game(Mode, Board, Board, 2, 1, 0).
 
 
 readGameMode(Mode):-
@@ -35,7 +36,7 @@ readGameMode(Mode):-
 	repeat,
 	nl,nl,
 	write('Mode (insert number): '),
-	getCodeInput(GameMode, 1), !,
+	getCodeInput(GameMode), !,
 	Mode is GameMode - 48.
 
 
@@ -44,7 +45,8 @@ game(_, _, _, _, _, 1):-
 
 game(_, _, _, _, _, 2):-
 	displayWinner(2).
-
+/* Mode Board OriginalBoard Player Move Winner
+*/
 game(Mode, Board, OriginalBoard, Player, 0, _):-
 	displayGame(Board, Player, 0),
 	gameOver(Board, Winner1),
@@ -73,12 +75,12 @@ playGame(Mode, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
 
 playGame(Mode, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
 	(Mode = 1, playerMove(Board, OriginalBoard, 2, 0, NewBoard);
-	moveAILevel1(Board, 2, OriginalBoard, 0, NewBoard)),
+	moveAILevel1(Board, 2, OriginalBoard, NewBoard)),
 	NewPlayer is 2.
 
 playGame(Mode, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
 	(Mode = 1, playerMove(Board, OriginalBoard, 2, 1, NewBoard);
-	moveAILevel1(Board, 2, OriginalBoard, 1, NewBoard)),
+	moveAILevel1(Board, 2, OriginalBoard, NewBoard)),
 	NewPlayer is 1.
 	
 
@@ -119,30 +121,41 @@ playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
  * if it is not valid, asks for new input until a valid move is input
  */
 readMove(Board, Player, MoveNr, OriginalBoard, Move):-
-	(write('Do you want to move a disc (D) or a line of discs (L)? '),
-	getCodeInput(TypeCode, ValidType),
+	repeat,
+	write('Do you want to move a disc (D) or a line of discs (L)? '),
+	getCodeInput(TypeCode),
 	char_code(Type, TypeCode),
 	nl, nl,
-	(ValidType = 1, Type = 'D', write('Which disc do you want to move?');
-	ValidType = 1, Type = 'L', write('Coordinates of the first disc of the line:')),
+	(Type = 'D', write('Which disc do you want to move?');
+	Type = 'L', write('Coordinates of the first disc of the line:')),
 	nl, nl,
+	repeat,
 	write('Horizontal coord.: '),
-	getCodeInput(H, ValidH),
-	ValidH = 1,
+	getCodeInput(H),
 	OldH is H - 64,
+	repeat,
 	nl, write('Vertical coord.: '),
-	getCodeInput(V, ValidV),
-	ValidV = 1,
+	getCodeInput(V),
 	OldV is V - 48,
+	repeat,	
 	nl, write('Direction (Up - U, Down - D, Left - L, Right - R): '),
-	getCodeInput(DirCode, ValidDir),
+	getCodeInput(DirCode),
 	char_code(Direction, DirCode),
+	validDirection(Direction),
 	nl,
-	ValidDir = 1,
 	isPlayerMoveValid(Board, Player, OriginalBoard, [OldH, OldV, Direction, Type], Valid),
-	Valid = 1, Move = [OldH, OldV, Direction, Type] ;
+	(Valid = 1, Move = [OldH, OldV, Direction, Type] ;
 	write('That is not a valid move. Please try again.'), nl, nl,
 	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
+
+validDirection('L').
+
+validDirection('R').
+
+validDirection('U').
+
+validDirection('D').
+
 
 /* move(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -244,7 +257,7 @@ multipleMove(Move, Board, NewBoard):-
 	(Opponent = 0, setPosition(TmpBoard, NewH, NewV, Player, NewBoard);
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs),
 		positionFromDirection(Direction, [NewH, NewV], OpponentDiscs, OpponentH, OpponentV),
-		(validCoords(Board, OpponentH, OpponentV, 1), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
+		(validCoords(Board, OpponentH, OpponentV), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
 		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
 /* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +Move, -Valid)
@@ -259,11 +272,11 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move, Valid):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
-	validCoords(Board, OldH, OldV, 1),
+	validCoords(Board, OldH, OldV),
 	getPosition(Board, OldH, OldV, CellContent),
 	CellContent = Player,
 	(positionFromDirection(Direction, [OldH, OldV], 1, NewH, NewV),
-	validCoords(Board, NewH, NewV, 1),
+	validCoords(Board, NewH, NewV),
 	checkResetBoard(Board, OriginalBoard, Move, 1),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
 	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction], 1)),
@@ -278,7 +291,7 @@ validateLineMove(Board, Player, MoveInfo, Valid):-
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
 	(PlayerDiscs > 1,
 	positionFromDirection(Direction, [Horizontal, Vertical], PlayerDiscs, NewH, NewV),
-	validCoords(Board, NewH, NewV, 1),
+	validCoords(Board, NewH, NewV),
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
 		countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Opponent, OpponentDiscs), 
@@ -295,7 +308,7 @@ checkResetBoard(_, _, _, Valid):-
 	Valid = 0.
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	bagof(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
+	findall(Move, isPlayerMoveValid(Board, Player, OriginalBoard, Move, 1), ListOfMoves).
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
