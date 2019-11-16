@@ -27,7 +27,14 @@ play:-
 	readGameMode(Mode, Level),
 	game(Mode, Level, Board, Board, 1, 0, 0).
 
-
+/*
+Level
+0 - pvp
+1 - player cpu1 / cpu1 vs cpu1
+2 - player cpu2 / cpu2 vs cpu2
+3 - cpu1 vs cpu2
+4 - cpu2 vs cpu1
+*/
 readGameMode(Mode, Level):-
 	write('GAME MODE'), nl,
 	write('1 - Player vs Player'), nl,
@@ -39,14 +46,29 @@ readGameMode(Mode, Level):-
 	getCodeInput(GameMode),
 	(GameMode = 49; GameMode = 50; GameMode = 51), !,
 	Mode is GameMode - 48,
-	((Mode = 2; Mode = 3),
-	  nl, nl, 
-	  repeat,
-	  write('CPU Level (1 or 2): '),
-	  getCodeInput(AILevel),
-	  (AILevel = 49; AILevel = 50), !,
-	  Level is AILevel - 48;
-	Level is 0).
+	(Mode = 2,
+	 repeat,
+	 nl, nl,
+	 write('CPU 1 Level (1 or 2): '),
+	 getCodeInput(AI1Level),
+	 (AI1Level = 49; AI1Level = 50), !,
+	 nl, nl,
+	 repeat,
+	 write('CPU 2 Level (1 or 2): '),
+	 getCodeInput(AI2Level),
+	 (AI2Level = 49; AI2Level = 50), !,
+	 (AI1Level = AI2Level, Level is AI1Level - 48;
+	  AI1Level = 49, Level is 3;
+	  Level is 4
+	);
+	(Mode = 3,
+	 repeat,
+	 nl, nl,  
+	 write('CPU Level (1 or 2): '),
+	 getCodeInput(AILevel),
+	 (AILevel = 49; AILevel = 50), !,
+	 Level is AILevel - 48;
+	Level is 0)).
 
 
 game(_, _, _, _, _, _, 1):-
@@ -302,6 +324,13 @@ chooseMove(Board, Player, OriginalBoard, 1, Move):-
 chooseMove(Board, Player, OriginalBoard, 2, Move):-
 	moveAILevel2(Board, Player, OriginalBoard, Move).
 
+chooseMove(Board, Player, OriginalBoard, 3, Move):-
+	(Player = 1, moveAILevel1(Board, Player, OriginalBoard, Move);
+	 Player = 2, moveAILevel2(Board, Player, OriginalBoard, Move)).
+
+chooseMove(Board, Player, OriginalBoard, 4, Move):-
+	(Player = 1, moveAILevel2(Board, Player, OriginalBoard, Move);
+	 Player = 2, moveAILevel1(Board, Player, OriginalBoard, Move)).
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD),
