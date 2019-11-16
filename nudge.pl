@@ -30,8 +30,8 @@ play:-
 /*
 Level
 0 - pvp
-1 - player cpu1 / cpu1 vs cpu1
-2 - player cpu2 / cpu2 vs cpu2
+1 - player vs cpu1 / cpu1 vs cpu1
+2 - player vs cpu2 / cpu2 vs cpu2
 3 - cpu1 vs cpu2
 4 - cpu2 vs cpu1
 */
@@ -98,24 +98,28 @@ playGame(Mode, Level, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
 	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
 	readMove(Board, 1, 0, OriginalBoard, Move)),
 	move(Move, Board, NewBoard),
+	(Mode = 2, write(' '), getCodeInput(_); true),
 	NewPlayer is 1.
 
 playGame(Mode, Level, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
 	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
 	readMove(Board, 1, 1, OriginalBoard, Move)),
 	move(Move, Board, NewBoard),
+	(Mode = 2, write(' '), getCodeInput(_); true),
 	NewPlayer is 2.
 
 playGame(Mode, Level, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
 	(Mode = 1, readMove(Board, 2, 0, OriginalBoard, Move);
 	chooseMove(Board, 2, OriginalBoard, Level, Move)),
 	move(Move, Board, NewBoard),
-	NewPlayer is 1.
+	(Mode = 2, write(' '), getCodeInput(_); true),
+	NewPlayer is 2.
 
 playGame(Mode, Level, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
 	(Mode = 1, readMove(Board, 2, 1, OriginalBoard, Move);
 	chooseMove(Board, 2, OriginalBoard, Level, Move)),
 	move(Move, Board, NewBoard),
+	(Mode = 2, write(' '), getCodeInput(_); true),
 	NewPlayer is 1.
 	
 
