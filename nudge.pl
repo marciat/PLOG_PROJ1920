@@ -24,11 +24,11 @@ initBoard(Board):-
  * starts game */
 play:-
 	initBoard(Board),
-	readGameMode(Mode),
-	game(Mode, Board, Board, 1, 0, 0).
+	readGameMode(Mode, Level),
+	game(Mode, Level, Board, Board, 1, 0, 0).
 
 
-readGameMode(Mode):-
+readGameMode(Mode, Level):-
 	write('GAME MODE'), nl,
 	write('1 - Player vs Player'), nl,
 	write('2 - CPU vs CPU'), nl,
@@ -36,51 +36,64 @@ readGameMode(Mode):-
 	repeat,
 	nl,nl,
 	write('Mode (insert number): '),
-	getCodeInput(GameMode), !,
-	Mode is GameMode - 48.
+	getCodeInput(GameMode),
+	(GameMode = 49; GameMode = 50; GameMode = 51), !,
+	Mode is GameMode - 48,
+	((Mode = 2; Mode = 3),
+	  nl, nl, 
+	  repeat,
+	  write('CPU Level (1 or 2): '),
+	  getCodeInput(AILevel),
+	  (AILevel = 49; AILevel = 50), !,
+	  Level is AILevel - 48;
+	Level is 0).
 
 
-game(_, _, _, _, _, 1):-
+game(_, _, _, _, _, _, 1):-
 	displayWinner(1).
 
-game(_, _, _, _, _, 2):-
+game(_, _, _, _, _, _, 2):-
 	displayWinner(2).
 /* Mode Board OriginalBoard Player Move Winner
 */
-game(Mode, Board, OriginalBoard, Player, 0, _):-
+game(Mode, Level, Board, OriginalBoard, Player, 0, _):-
 	displayGame(Board, Player, 0),
-	gameOver(Board, Winner1),
-	playGame(Mode, Board, OriginalBoard, Player, 0, Winner1, NewBoard, NewPlayer),
-	game(Mode, NewBoard, OriginalBoard, NewPlayer, 1, Winner1).
+	gameOver(Board, Winner),
+	playGame(Mode, Level, Board, OriginalBoard, Player, 0, Winner, NewBoard, NewPlayer),
+	game(Mode, Level, NewBoard, OriginalBoard, NewPlayer, 1, Winner).
 
-game(Mode, Board, OriginalBoard, Player, 1, _):-
+game(Mode, Level, Board, OriginalBoard, Player, 1, _):-
 	displayGame(Board, Player, 1),
-	gameOver(Board, Winner1),
-	playGame(Mode, Board, OriginalBoard, Player, 1, Winner1, NewBoard, NewPlayer),
-	game(Mode, NewBoard, NewBoard, NewPlayer, 0, Winner1).
+	gameOver(Board, Winner),
+	playGame(Mode, Level, Board, OriginalBoard, Player, 1, Winner, NewBoard, NewPlayer),
+	game(Mode, Level, NewBoard, NewBoard, NewPlayer, 0, Winner).
 
-playGame(_, _, _, _, _, 1, _, _).
+playGame(_, _, _, _, _, _, 1, _, _).
 	
-playGame(_, _, _, _, _, 2, _, _).
+playGame(_, _, _, _, _, _, 2, _, _).
 
-playGame(Mode, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
-	(Mode = 2, moveAILevel2(Board, 1, OriginalBoard, NewBoard);
-	playerMove(Board, OriginalBoard, 1, 0, NewBoard)),
+playGame(Mode, Level, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
+	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
+	readMove(Board, 1, 0, OriginalBoard, Move)),
+	move(Move, Board, NewBoard),
 	NewPlayer is 1.
 
-playGame(Mode, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
-	(Mode = 2, moveAILevel2(Board, 1, OriginalBoard, NewBoard);
-	playerMove(Board, OriginalBoard, 1, 1, NewBoard)),
+playGame(Mode, Level, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
+	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
+	readMove(Board, 1, 1, OriginalBoard, Move)),
+	move(Move, Board, NewBoard),
 	NewPlayer is 2.
 
-playGame(Mode, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
-	(Mode = 1, playerMove(Board, OriginalBoard, 2, 0, NewBoard);
-	moveAILevel2(Board, 2, OriginalBoard, NewBoard)),
-	NewPlayer is 2.
+playGame(Mode, Level, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
+	(Mode = 1, readMove(Board, 2, 0, OriginalBoard, Move);
+	chooseMove(Board, 2, OriginalBoard, Level, Move)),
+	move(Move, Board, NewBoard),
+	NewPlayer is 1.
 
-playGame(Mode, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
-	(Mode = 1, playerMove(Board, OriginalBoard, 2, 1, NewBoard);
-	moveAILevel2(Board, 2, OriginalBoard, NewBoard)),
+playGame(Mode, Level, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
+	(Mode = 1, readMove(Board, 2, 1, OriginalBoard, Move);
+	chooseMove(Board, 2, OriginalBoard, Level, Move)),
+	move(Move, Board, NewBoard),
 	NewPlayer is 1.
 	
 
@@ -96,19 +109,6 @@ gameOver(Board, Winner):-
 	(White > Black, Winner = 1;
 	Black > White, Winner = 2;
 	Black = White, Winner = 0).
-
-/* playerMove(+Board, +OriginalBoard, +Player, +MoveNr, -NewBoard)
- * Board - current board
- * OriginalBoard - board when player's turn started (different from Board if it's the second move)
- * Player - current player
- * MoveNr - current move of the player's turn (first or second)
- * NewBoard - new board after the move 
- * reads user input for a move, validates it and then applies the move to the board
- */
-playerMove(Board, OriginalBoard, Player, MoveNr, NewBoard):-
-	readMove(Board, Player, MoveNr, OriginalBoard, Move),
-	move(Move, Board, NewBoard).
-
 
 /* readMove(+Board, +Player, +MoveNr, +OriginalBoard, -Move)
  * Board - current board
@@ -296,6 +296,13 @@ checkResetBoard(Board, OriginalBoard, Move):-
 	move(Move, Board, NewBoard), !,
 	NewBoard \= OriginalBoard.
 
+chooseMove(Board, Player, OriginalBoard, 1, Move):-
+	moveAILevel1(Board, Player, OriginalBoard, Move).
+
+chooseMove(Board, Player, OriginalBoard, 2, Move):-
+	moveAILevel2(Board, Player, OriginalBoard, Move).
+
+
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD),
 	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L']), ListOfMovesL),
@@ -314,16 +321,13 @@ findWinningMoves(Board, Player, [H|T], ListOfWinning):-
 	value(TmpBoard, Player, Value),
 	(Value = 1, append(NewListOfWinning, [H], ListOfWinning);
 	Value = 0, append(NewListOfWinning, [], ListOfWinning)).
-	
 
-moveAILevel2(Board, Player, OriginalBoard, NewBoard):-
+moveAILevel1(Board, Player, OriginalBoard, Move):-
+	validMoves(Board, Player, OriginalBoard, ListOfMoves),
+	random_member(Move, ListOfMoves).
+
+moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
 	(length(ListOfWinning, 0), random_member(Move, ListOfMoves);
-	random_member(Move, ListOfWinning)),
-	move(Move, Board, NewBoard).	
-
-moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
-	validMoves(Board, Player, OriginalBoard, ListOfMoves),
-	random_member(Move, ListOfMoves),
-	move(Move, Board, NewBoard).
+	random_member(Move, ListOfWinning)).	

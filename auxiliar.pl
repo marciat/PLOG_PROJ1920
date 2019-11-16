@@ -127,8 +127,6 @@ countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 	NumberOfDiscs is NewNumber + 1;
 	NumberOfDiscs is 0).
 
-%countLineOfDiscs(_, _, _, _, 0).
-
 getCodeInput(Code):-
 	read_line(Codes),
 	length(Codes, 1),
