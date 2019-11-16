@@ -304,7 +304,6 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 
 value(Board, Player, Value):-	
 	gameOver(Board, Winner),
-	write(Winner), write(Player), nl,
 	(Player = Winner, Value = 1;
 	Value = 0).
 
@@ -314,16 +313,13 @@ findWinningMoves(Board, Player, [H|T], ListOfWinning):-
 	findWinningMoves(Board, Player, T, NewListOfWinning),
 	move(H, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-	write(Value), nl,
 	(Value = 1, append(NewListOfWinning, [H], ListOfWinning);
 	Value = 0, append(NewListOfWinning, [], ListOfWinning)).
 	
 
 moveAILevel2(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
-	write(ListOfMoves), nl,
 	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
-	write(ListOfWinning), nl,
 	random_member(Move, ListOfWinning),
 	move(Move, Board, NewBoard).	
 
