@@ -131,7 +131,9 @@ getCodeInput(Code):-
 	read_line(Codes),
 	length(Codes, 1),
 	[C|_] = Codes,
-	Code is C.
+	(C >= 97, C =< 122, Code is C - 32;
+	Code is C).
+	
 	
 
 
