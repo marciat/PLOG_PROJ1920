@@ -77,11 +77,10 @@ getBoardDimensions(Board, Lines, Columns):-
 	length(H, Columns).
 
 
-/* validCoords(+Board, +Horizontal, +Vertical, -Valid)
+/* validCoords(+Board, +Horizontal, +Vertical)
  * Board - game board
  * Horizontal - horizontal coordinate
  * Vertical - vertical coordinate
- * Valid - 1 if coordinates are valid, 0 if they are not
  * checks if coordinates are valid for a board, that is, if they are within board boundaries
  */
 validCoords(Board, Horizontal, Vertical):-
@@ -108,8 +107,6 @@ checkVerticalRecursive(MaxV, Vertical):-
 	NewMax is MaxV - 1, !, checkVerticalRecursive(NewMax, Vertical).
 
 checkVerticalRecursive(1, 1).
-
-
 
 
 /* countLineOfDiscs(+Board, +StartingCoordinates, +Direction, +Disc, -NumberOfDiscs)

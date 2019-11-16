@@ -143,8 +143,8 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	char_code(Direction, DirCode),
 	validDirection(Direction),
 	nl,
-	isPlayerMoveValid(Board, Player, OriginalBoard, [OldH, OldV, Direction, Type], Valid),
-	(Valid = 1, Move = [OldH, OldV, Direction, Type] ;
+	(isPlayerMoveValid(Board, Player, OriginalBoard, [OldH, OldV, Direction, Type]),
+	Move = [OldH, OldV, Direction, Type] ;
 	write('That is not a valid move. Please try again.'), nl, nl,
 	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
 
@@ -260,32 +260,27 @@ multipleMove(Move, Board, NewBoard):-
 		(validCoords(Board, OpponentH, OpponentV), setPosition(TmpBoard, OpponentH, OpponentV, Opponent, TmpBoard2), setPosition(TmpBoard2, NewH, NewV, Player, NewBoard);
 		setPosition(TmpBoard, NewH, NewV, Player, NewBoard))).
 
-/* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +Move, -Valid)
+/* isPlayerMoveValid(+Board, +Player, +OriginalBoard, +Move)
  * Board - current game board
  * Player - current player
  * Original Board - game board in the beginning of player's turn
  * Move - information about the move
  *        list with coordinates of disc and direction to move it
- * Valid - 1 if move is valid and 0 if it is not
  */
-isPlayerMoveValid(Board, Player, OriginalBoard, Move, Valid):-
+isPlayerMoveValid(Board, Player, OriginalBoard, Move):-
 	[OldH, OldV | D] = Move,
 	[Direction | T] = D,
 	[Type | _] = T,
 	validCoords(Board, OldH, OldV),
 	getPosition(Board, OldH, OldV, CellContent),
 	CellContent = Player,
-	(positionFromDirection(Direction, [OldH, OldV], 1, NewH, NewV),
+	positionFromDirection(Direction, [OldH, OldV], 1, NewH, NewV),
 	validCoords(Board, NewH, NewV),
-	checkResetBoard(Board, OriginalBoard, Move, 1),
+	checkResetBoard(Board, OriginalBoard, Move),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
-	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction], 1)),
-	Valid is 1);
-	Valid is 0.
+	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction])).
 
-isPlayerMoveValid(_, _, _, _, 0).
-
-validateLineMove(Board, Player, MoveInfo, Valid):-
+validateLineMove(Board, Player, MoveInfo):-
 	[Horizontal, Vertical | D] = MoveInfo,
 	[Direction | _] = D,
 	countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Player, PlayerDiscs),
@@ -295,21 +290,15 @@ validateLineMove(Board, Player, MoveInfo, Valid):-
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
 		countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Opponent, OpponentDiscs), 
-		OpponentDiscs < PlayerDiscs),
-	Valid is 1;
-	Valid is 0).
+		OpponentDiscs < PlayerDiscs)).
 
-checkResetBoard(Board, OriginalBoard, Move, Valid):-
+checkResetBoard(Board, OriginalBoard, Move):-
 	move(Move, Board, NewBoard), !,
-	NewBoard \= OriginalBoard,
-	Valid = 1.
-
-checkResetBoard(_, _, _, Valid):-
-	Valid = 0.
+	NewBoard \= OriginalBoard.
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D'], 1), ListOfMovesD),
-	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L'], 1), ListOfMovesL),
+	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD),
+	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L']), ListOfMovesL),
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
 
