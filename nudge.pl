@@ -14,10 +14,10 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[2,1,1,0,0],
+	Board=[[0,0,0,0,0],
+	       [0,1,1,1,0],
 	       [0,0,0,0,0],
-	       [0,0,0,0,0],
-	       [0,0,2,0,0],
+	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
 /* play
@@ -303,8 +303,7 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 
 
 value(Board, Player, Value):-	
-	gameOver(Board, Winner),
-	(Player = Winner, Value = 1;
+	(gameOver(Board, Player), Value = 1;
 	Value = 0).
 
 findWinningMoves(_, _, [], []).
@@ -320,7 +319,8 @@ findWinningMoves(Board, Player, [H|T], ListOfWinning):-
 moveAILevel2(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
-	random_member(Move, ListOfWinning),
+	(length(ListOfWinning, 0), random_member(Move, ListOfMoves);
+	random_member(Move, ListOfWinning)),
 	move(Move, Board, NewBoard).	
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
