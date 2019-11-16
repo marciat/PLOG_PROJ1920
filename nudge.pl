@@ -14,10 +14,10 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[0,0,0,0,0],
-	       [0,1,1,1,0],
+	Board=[[2,1,1,0,0],
 	       [0,0,0,0,0],
-	       [0,2,2,2,0],
+	       [0,0,0,0,0],
+	       [0,0,2,0,0],
 	       [0,0,0,0,0]].
 
 /* play
@@ -25,7 +25,7 @@ initBoard(Board):-
 play:-
 	initBoard(Board),
 	readGameMode(Mode),
-	game(Mode, Board, Board, 2, 0, 0).
+	game(Mode, Board, Board, 1, 0, 0).
 
 
 readGameMode(Mode):-
@@ -64,23 +64,23 @@ playGame(_, _, _, _, _, 1, _, _).
 playGame(_, _, _, _, _, 2, _, _).
 
 playGame(Mode, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
-	(Mode = 2, moveAILevel1(Board, 1, OriginalBoard, NewBoard);
+	(Mode = 2, moveAILevel2(Board, 1, OriginalBoard, NewBoard);
 	playerMove(Board, OriginalBoard, 1, 0, NewBoard)),
 	NewPlayer is 1.
 
 playGame(Mode, Board, OriginalBoard, 1, 1, _, NewBoard, NewPlayer):-
-	(Mode = 2, moveAILevel1(Board, 1, OriginalBoard, NewBoard);
+	(Mode = 2, moveAILevel2(Board, 1, OriginalBoard, NewBoard);
 	playerMove(Board, OriginalBoard, 1, 1, NewBoard)),
 	NewPlayer is 2.
 
 playGame(Mode, Board, OriginalBoard, 2, 0, _, NewBoard, NewPlayer):-
 	(Mode = 1, playerMove(Board, OriginalBoard, 2, 0, NewBoard);
-	moveAILevel1(Board, 2, OriginalBoard, NewBoard)),
+	moveAILevel2(Board, 2, OriginalBoard, NewBoard)),
 	NewPlayer is 2.
 
 playGame(Mode, Board, OriginalBoard, 2, 1, _, NewBoard, NewPlayer):-
 	(Mode = 1, playerMove(Board, OriginalBoard, 2, 1, NewBoard);
-	moveAILevel1(Board, 2, OriginalBoard, NewBoard)),
+	moveAILevel2(Board, 2, OriginalBoard, NewBoard)),
 	NewPlayer is 1.
 	
 
@@ -312,6 +312,26 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L'], 1), ListOfMovesL),
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
+
+value(Board, Player, Value):-
+	(gameOver(Board, Player), Value = 1;
+	Value = 0).
+
+findWinningMoves(_, _, [], []).
+
+findWinningMoves(Board, Player, [H|T], ListOfWinning):-
+	findWinningMoves(Board, Player, T, NewListOfWinning),
+	move(H, Board, TmpBoard),
+	value(TmpBoard, Player, Value),
+	(Value = 1, append(NewListOfWinning, [H], ListOfWinning);
+	Value = 0).
+	
+
+moveAILevel2(Board, Player, OriginalBoard, NewBoard):-
+	validMoves(Board, Player, OriginalBoard, ListOfMoves),
+	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
+	random_member(Move, ListOfWinning),
+	move(Move, Board, NewBoard).	
 
 moveAILevel1(Board, Player, OriginalBoard, NewBoard):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
