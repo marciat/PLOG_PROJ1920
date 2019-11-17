@@ -14,14 +14,6 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 
-
-/*Board=[[0,0,0,0,0],
-	       [0,2,0,0,0],
-	       [0,0,0,0,0],
-	       [2,1,1,1,2],
-	       [0,0,0,0,0]].
-*/
-
 initBoard(1, Board):-
 	Board=[[0,0,0,0,0],
 	       [0,1,1,1,0],
@@ -429,51 +421,39 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
 
-isWinningPosition(Board, Player, Value):-
+isWinningPosition(Board, Player):-
 	validMoves(Board, Player, Board, ListOfMoves),
 	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
-	length(ListOfWinning, V),
-	V \= 0, 
-	Value is V.
-
+	length(ListOfWinning, L), !, L>0.
 
 value(Board, Player, Value):-	
 	(gameOver(Board, Player), Value = 3;
-	isWinningPosition(Board, Player, V1), Value is V1;
-	Opponent is Player mod 2 + 1,
-	isWinningPosition(Board, Opponent, V2), Value is 0 - V2;
-	Value = 0).
+	 Opponent is Player mod 2 + 1,
+	 isWinningPosition(Board, Opponent), Value is 0;
+	 isWinningPosition(Board, Player), Value is 2;
+	 Value = 1).
 
-listMovesByValue(_, _, [], [[],[],[],[],[],[]]).
+listMovesByValue(_, _, [], [[],[],[],[]]).
 
-listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinnings):-
-	listMovesByValue(Board, Player, ListOfMoves, NewListWinnings),
+listMovesByValue(Board, Player, [Move|ListOfMoves], ListByValues):-
+	listMovesByValue(Board, Player, ListOfMoves, NewListByValues),
 	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-	write(Value), write(Move), nl,
-    (Value >= 3, nth0(0, NewListWinnings, CurrList), 
+    (Value = 3, nth1(1, NewListByValues, CurrList), 
 				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 1, UpdatedList, ListWinnings);
+				replace(NewListByValues, 1, UpdatedList, ListByValues);
 
-	 Value = 2, nth0(1, NewListWinnings, CurrList), 
+	 Value = 2, nth1(2, NewListByValues, CurrList), 
 				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 2, UpdatedList, ListWinnings);
+				replace(NewListByValues, 2, UpdatedList, ListByValues);
 
-	 Value = 1, nth0(2, NewListWinnings, CurrList), 
+	 Value = 1, nth1(3, NewListByValues, CurrList), 
 				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 3, UpdatedList, ListWinnings);
+				replace(NewListByValues, 3, UpdatedList, ListByValues);
 
-	 Value = 0, nth0(3, NewListWinnings, CurrList), 
+	 Value = 0, nth1(4, NewListByValues, CurrList), 
 				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 4, UpdatedList, ListWinnings);
-
-	 Value = -1, nth0(4, NewListWinnings, CurrList), 
-				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 5, UpdatedList, ListWinnings);
-
-	 Value =< -2, nth0(5, NewListWinnings, CurrList), 
-				append(CurrList, [Move], UpdatedList),
-				replace(NewListWinnings, 6, UpdatedList, ListWinnings)).
+				replace(NewListByValues, 4, UpdatedList, ListByValues)).
 
 findWinningMoves(_, _, [], []).
 
@@ -504,9 +484,7 @@ moveAILevel1(Board, Player, OriginalBoard, Move):-
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	listMovesByValue(Board, Player, ListOfMoves, ListWinnings),
-	(\+nth0(0,ListWinnings,[]), nth0(0, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth0(1,ListWinnings,[]), nth0(1, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth0(2,ListWinnings,[]), nth0(2, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth0(3,ListWinnings,[]), nth0(3, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth0(4,ListWinnings,[]), nth0(4, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth0(5,ListWinnings,[]), nth0(5, ListWinnings, CurrList), random_member(Move, CurrList)).
+	(\+nth1(1,ListWinnings,[]), nth1(1, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth1(2,ListWinnings,[]), nth1(2, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth1(3,ListWinnings,[]), nth1(3, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth1(4,ListWinnings,[]), nth1(4, ListWinnings, CurrList), random_member(Move, CurrList)).
