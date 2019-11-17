@@ -14,11 +14,11 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[0,0,0,2,0],
-	       [0,0,0,2,0],
-	       [0,0,0,2,0],
-	       [0,0,0,1,0],
-	       [0,0,1,1,0]].
+	Board=[[0,0,0,0,0],
+	       [0,2,2,2,0],
+	       [0,0,0,0,0],
+	       [0,1,1,1,0],
+	       [0,0,0,0,0]].
 
 /* play
  * starts game */
@@ -315,7 +315,7 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move):-
 	validCoords(Board, NewH, NewV),
 	checkResetBoard(Board, OriginalBoard, Move),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
-	Type = 'L', !, validateLineMove(Board, Player, [OldH, OldV, Direction])).
+	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction])).
 
 validateLineMove(Board, Player, MoveInfo):-
 	[Horizontal, Vertical | D] = MoveInfo,
@@ -377,53 +377,35 @@ value(Board, Player, Value):-
 	isWinningPosition(Board, Opponent, V2), Value is 0 - V2;
 	Value = 0).
 
-listMovesByValue(_, _, [], [], [], [], [], [], []).
+listMovesByValue(_, _, [], [[],[],[],[],[],[]]).
 
-listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves):-
-	listMovesByValue(Board, Player, ListOfMoves, NewListWinning, NewList2WinningMoves, NewList1WinningMove, NewListNeutral, NewList1LosingMove, NewList2LosingMoves),
+listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinnings):-
+	listMovesByValue(Board, Player, ListOfMoves, NewListWinnings),
 	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-    (Value = 3, append(NewListWinning, [Move], ListWinning), 
-				append(NewList2WinningMoves, [], List2WinningMoves), 
-				append(NewList1WinningMove, [], List1WinningMove), 
-				append(NewListNeutral, [], ListNeutral), 
-				append(NewList1LosingMove, [], List1LosingMove), 
-				append(NewList2LosingMoves, [], List2LosingMoves);
+    (Value = 3, nth0(0, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 1, UpdatedList, ListWinnings);
 
-	 Value = 2, append(NewListWinning, [], ListWinning), 
-				append(NewList2WinningMoves, [Move], List2WinningMoves), 
-				append(NewList1WinningMove, [], List1WinningMove), 
-				append(NewListNeutral, [], ListNeutral), 
-				append(NewList1LosingMove, [], List1LosingMove), 
-				append(NewList2LosingMoves, [], List2LosingMoves);
+	 Value = 2, nth0(1, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 2, UpdatedList, ListWinnings);
 
-	 Value = 1, append(NewListWinning, [], ListWinning), 
-				append(NewList2WinningMoves, [], List2WinningMoves), 
-				append(NewList1WinningMove, [Move], List1WinningMove), 
-				append(NewListNeutral, [], ListNeutral), 
-				append(NewList1LosingMove, [], List1LosingMove), 
-				append(NewList2LosingMoves, [], List2LosingMoves);
+	 Value = 1, nth0(2, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 3, UpdatedList, ListWinnings);
 
-	 Value = 0, append(NewListWinning, [], ListWinning), 
-				append(NewList2WinningMoves, [], List2WinningMoves), 
-				append(NewList1WinningMove, [], List1WinningMove), 
-				append(NewListNeutral, [Move], ListNeutral), 
-				append(NewList1LosingMove, [], List1LosingMove), 
-				append(NewList2LosingMoves, [], List2LosingMoves);
+	 Value = 0, nth0(3, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 4, UpdatedList, ListWinnings);
 
-	 Value = -1, append(NewListWinning, [], ListWinning), 
-				append(NewList2WinningMoves, [], List2WinningMoves), 
-				append(NewList1WinningMove, [], List1WinningMove), 
-				append(NewListNeutral, [], ListNeutral), 
-				append(NewList1LosingMove, [Move], List1LosingMove), 
-				append(NewList2LosingMoves, [], List2LosingMoves);
+	 Value = -1, nth0(4, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 5, UpdatedList, ListWinnings);
 
-	 Value = -2, append(NewListWinning, [], ListWinning), 
-				append(NewList2WinningMoves, [], List2WinningMoves), 
-				append(NewList1WinningMove, [], List1WinningMove), 
-				append(NewListNeutral, [], ListNeutral), 
-				append(NewList1LosingMove, [], List1LosingMove), 
-				append(NewList2LosingMoves, [Move], List2LosingMoves)).
+	 Value = -2, nth0(5, NewListWinnings, CurrList), 
+				append(CurrList, [Move], UpdatedList),
+				replace(NewListWinnings, 6, UpdatedList, ListWinnings)).
 
 findWinningMoves(_, _, [], []).
 
@@ -453,10 +435,10 @@ moveAILevel1(Board, Player, OriginalBoard, Move):-
  */
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
-	listMovesByValue(Board, Player, ListOfMoves, ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves),
-	(\+length(ListWinning, 0), random_member(Move, ListWinning);
-	\+length(List2WinningMoves, 0), random_member(Move, List2WinningMoves);
-	\+length(List1WinningMove, 0), random_member(Move, List1WinningMove);
-	\+length(ListNeutral, 0), random_member(Move, ListNeutral);
-	\+length(List1LosingMove, 0), random_member(Move, List1LosingMove);
-	\+length(List2LosingMoves, 0), random_member(Move, List2LosingMoves)).
+	listMovesByValue(Board, Player, ListOfMoves, ListWinnings),
+	(\+nth0(0,ListWinnings,[]), nth0(0, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth0(1,ListWinnings,[]), nth0(1, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth0(2,ListWinnings,[]), nth0(2, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth0(3,ListWinnings,[]), nth0(3, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth0(4,ListWinnings,[]), nth0(4, ListWinnings, CurrList), random_member(Move, CurrList);
+	\+nth0(5,ListWinnings,[]), nth0(5, ListWinnings, CurrList), random_member(Move, CurrList)).
