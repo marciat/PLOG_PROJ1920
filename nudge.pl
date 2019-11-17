@@ -47,7 +47,7 @@ play:-
 	chooseBoard(BoardNumber),
 	initBoard(BoardNumber, Board),
 	readGameMode(Mode, Level),
-	game(Mode, Level, Board, Board, 2, 0, 0).
+	game(Mode, Level, Board, Board, 1, 0, 0).
 
 /*
 * chooseBoard(-BoardNumber).
@@ -55,7 +55,7 @@ play:-
 * returns the starting board chosen by the user
 */
 chooseBoard(BoardNumber):-
-	write('SELECT THE STARTING BOARD POSITION'),
+	write('SELECT THE STARTING BOARD CONFIGURATION'),
 	nl,nl,
 	write('Board 1:'), nl,
 	initBoard(1, Board1),
