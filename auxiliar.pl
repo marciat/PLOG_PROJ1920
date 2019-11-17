@@ -88,6 +88,11 @@ validCoords(Board, Horizontal, Vertical):-
 	checkHorizontalRecursive(MaxH, Horizontal),
 	checkVerticalRecursive(MaxV, Vertical).
 
+/* checkHorizontalRecursive(+MaxH, +Horizontal)
+ * MaxH - upper boundary for horizontal coordinates
+ * Horizontal - horizontal coordinate
+ * checks if Horizontal is within boundaries, that is, if it's greater than 0 and no greater than MaxH 
+ */
 checkHorizontalRecursive(0, _):- !,fail.
 
 checkHorizontalRecursive(MaxH, Horizontal):-
@@ -98,6 +103,11 @@ checkHorizontalRecursive(MaxH, Horizontal):-
 
 checkHorizontalRecursive(1, 1).
 
+/* checkVerticalRecursive(+MaxV, +Vertical)
+ * MaxV - upper boundary for vertical coordinates
+ * Vertical - vertical coordinate
+ * checks if Vertical is within boundaries, that is, if it's greater than 0 and no greater than MaxV 
+ */
 checkVerticalRecursive(0, _):- !,fail.
 
 checkVerticalRecursive(MaxV, Vertical):-
@@ -127,6 +137,12 @@ countLineOfDiscs(Board, StartingCoordinates, Direction, Disc, NumberOfDiscs):-
 	NumberOfDiscs is NewNumber + 1;
 	NumberOfDiscs is 0).
 
+/* getCodeInput(-Code)
+ * Code - ASCII code of character read
+ * reads one character from user input and saves its ASCII code
+ * if user inputs multiple characters it fails
+ * if input is a lowercase letter, change it to uppercase
+ */
 getCodeInput(Code):-
 	read_line(Codes),
 	length(Codes, 1),

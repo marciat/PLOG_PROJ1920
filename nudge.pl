@@ -10,6 +10,14 @@ white discs - 1
 black discs - 2
 */
 
+validDirection('L').
+
+validDirection('R').
+
+validDirection('U').
+
+validDirection('D').
+
 /* initBoard(-Board)
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
@@ -41,6 +49,7 @@ initBoard(4, Board):-
 	       [0,0,0,0,0],
 	       [0,0,2,0,0],
 	       [0,2,0,2,0]].
+
 /* play
  * starts game */
 play:-
@@ -52,7 +61,8 @@ play:-
 /*
 * chooseBoard(-BoardNumber).
 * BoardNumber - starting board number (1-4)
-* returns the starting board chosen by the user
+* shows the user the different board layouts
+* saves the board number chosen by user
 */
 chooseBoard(BoardNumber):-
 	write('SELECT THE STARTING BOARD CONFIGURATION'),
@@ -91,6 +101,12 @@ Level
 3 - cpu1 vs cpu2
 4 - cpu2 vs cpu1
 */
+
+/* readGameMode(-Mode, -Level)
+ * Mode - game mode
+ * Level - game level
+ * asks user to choose game mode and, if applicable, CPU level
+ */
 readGameMode(Mode, Level):-
 	write('GAME MODE'), nl,
 	write('1 - Player vs Player'), nl,
@@ -126,13 +142,6 @@ readGameMode(Mode, Level):-
 	 Level is AILevel - 48;
 	Level is 0)).
 
-
-game(_, _, _, _, _, _, 1):-
-	displayWinner(1).
-
-game(_, _, _, _, _, _, 2):-
-	displayWinner(2).
-
 /* game(+Mode, +Board, +OriginalBoard, +Player, +MoveNr, +Winner).
  * Mode - number representing the game mode
  * Board - current game board
@@ -142,6 +151,13 @@ game(_, _, _, _, _, _, 2):-
  * Winner - game's winner (0 until game ends)
  * displays board, checks for game over, and executes moves
  */
+
+game(_, _, _, _, _, _, 1):-
+	displayWinner(1).
+
+game(_, _, _, _, _, _, 2):-
+	displayWinner(2).
+
 game(Mode, Level, Board, OriginalBoard, Player, 0, _):-
 	displayGame(Board, Player, 0),
 	gameOver(Board, Winner),
@@ -154,13 +170,10 @@ game(Mode, Level, Board, OriginalBoard, Player, 1, _):-
 	playGame(Mode, Level, Board, OriginalBoard, Player, 1, Winner, NewBoard, NewPlayer),
 	game(Mode, Level, NewBoard, NewBoard, NewPlayer, 0, Winner).
 
-playGame(_, _, _, _, _, _, 1, _, _).
-	
-playGame(_, _, _, _, _, _, 2, _, _).
 
 /* playGame(+Mode, +Level, +Board, +OriginalBoard, +Player, +MoveNr, +Winner, -NewBoard, -NewPlayer).
  * Mode - number representing the game mode
- * Level - number representing the AI difficulty level
+ * Level - number representing the game level
  * Board - current game board
  * OriginalBoard - board at the state before the player's first move
  * Player - current active player
@@ -168,8 +181,13 @@ playGame(_, _, _, _, _, _, 2, _, _).
  * Winner - game's winner (0 until game ends)
  * NewBoard - game board after executing the move
  * NewPlayer - player who moves next
- * calls function to read move (player) or randomize move (AI) and updates board and player
+ * calls function to read move (player) or choose move (AI) and updates board, move number and player
  */
+
+playGame(_, _, _, _, _, _, 1, _, _).
+	
+playGame(_, _, _, _, _, _, 2, _, _).
+
 playGame(Mode, Level, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
 	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
 	readMove(Board, 1, 0, OriginalBoard, Move)),
@@ -218,7 +236,7 @@ gameOver(Board, Winner):-
  * MoveNr - current move of the player's turn (first or second)
  * OriginalBoard - board when player's turn started (different from Board if it's the second move)
  * Move - information about the move read
- *        list with coordinates of disc and direction to move it
+ *        list with coordinates of disc, direction to move it and type (disc or line)
  * reads move information input by the user, checks if it is valid
  * if it is not valid, asks for new input until a valid move is input
  */
@@ -250,28 +268,29 @@ readMove(Board, Player, MoveNr, OriginalBoard, Move):-
 	write('That is not a valid move. Please try again.'), nl, nl,
 	readMove(Board, Player, MoveNr, OriginalBoard, Move)).
 
-validDirection('L').
-
-validDirection('R').
-
-validDirection('U').
-
-validDirection('D').
-
 
 /* move(+Move, +Board, -NewBoard)
  * Move - information about the move
- *        list with coordinates of disc and direction to move it
+ *        list with coordinates of disc, direction to move it and type (disc or line)
  * Board - current game board (before move is applied)
  * NewBoard - new game board (after move is applied)
+ * executes a move and generates a new, updated board
  */
 move(Move, Board, NewBoard):-
 	nth1(4, Move, Type),
 	(Type = 'D', simpleMove(Move, Board, NewBoard);
 	Type = 'L', multipleMove(Move, Board, NewBoard)).
 
-%incrementPosition(+Direction, +Coordinates, +Increment, +Candidates, -Final)
-
+/* incrementPosition(+Direction, +Coordinates, +Increment, +Candidates, -Final)
+ * Direction - direction in which to increment
+ * Coordinates - initial position coordinates
+ * Increment - number of units to increment
+ * Candidates - current coordinates being checked and incremented
+ * Final - final incremented coordinates
+ * increments position in a given direction, in a recursive way
+ * increments candidates one unit every recursive call and compares them with the expected final value
+ * if it is the expected final value, save it in Final
+ */
 incrementPosition('U', [H,Increment|_], Increment, _, [H,0]).
 
 incrementPosition('U', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
@@ -395,13 +414,20 @@ validateLineMove(Board, Player, MoveInfo):-
 /* checkResetBoard(+Board, +OriginalBoard, +Move)
  * Board - current game board
  * OriginalBoard - game board in the beginning of player's turn
- * Move - information about the move, list with coordinates of disc and direction to move it
+ * Move - information about the move, list with coordinates of disc, direction to move it and type (disc or line)
  */
 checkResetBoard(Board, OriginalBoard, Move):-
 	move(Move, Board, NewBoard), !,
 	NewBoard \= OriginalBoard.
 
-
+/* chooseMove(+Board, +Player, +OriginalBoard, +MoveNr, -Move)
+ * Board - current game board
+ * Player - current player
+ * Original Board - game board in the beginning of player's turn
+ * Level - game level
+ * Move - information of the chosen move
+ * chooses a move for the cpu, depending ont the game level
+ */
 chooseMove(Board, Player, OriginalBoard, 1, Move):-
 	moveAILevel1(Board, Player, OriginalBoard, Move).
 
@@ -430,12 +456,23 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	ListOfMovesL = []),
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
-
+/* isWinningPosition(+Board, +Player)
+ * Board - board to be evaluated
+ * Player - player that should be the winner
+ * checks if with the given Board, Player can make a subsequent move that allows them to win
+ */
 isWinningPosition(Board, Player):-
 	validMoves(Board, Player, Board, ListOfMoves),
 	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
 	length(ListOfWinning, L), !, L>0.
 
+/* value(+Board, +Player, -Value)
+ * Board - game board to be evaluated
+ * Player - player from which's perspective the board will be evaluated
+ * Value - board value
+ * finds board value by evaluating it according to different criteria
+ * these criteria are: if this board means Player has won (3), if it means Player could lose (0), if it means Player could win (2) or if it is neutral (1)
+ */
 value(Board, Player, Value):-	
 	(gameOver(Board, Player), Value = 3;
 	 Opponent is Player mod 2 + 1,
@@ -473,6 +510,13 @@ listMovesByValue(Board, Player, [Move|ListOfMoves], ListByValues):-
 				append(CurrList, [Move], UpdatedList),
 				replace(NewListByValues, 4, UpdatedList, ListByValues)).
 
+/* findWinningMoves(+Board, +Player, +ListOfMoves, -ListOfWinning)
+ * Board - game board
+ * Player - player that should win
+ * ListOfMoves - list of possible moves for Player with Board
+ * ListOfWinning - list of moves that allow player to win
+ * given a list of possible moves, finds the moves with which Player wins
+ */
 findWinningMoves(_, _, [], []).
 
 findWinningMoves(Board, Player, [Move|ListOfMoves], ListOfWinning):-
