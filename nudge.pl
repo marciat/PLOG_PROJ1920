@@ -337,23 +337,50 @@ chooseMove(Board, Player, OriginalBoard, 4, Move):-
 	 Player = 2, moveAILevel1(Board, Player, OriginalBoard, Move)).
 
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
-	findall([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD),
-	findall([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L']), ListOfMovesL),
+	(setof([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD);
+	ListOfMovesD = []),
+	(setof([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L']), ListOfMovesL);
+	ListOfMovesD = []),
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
 
+isWinningPosition(Board, Player, Value):-
+	validMoves(Board, Player, Board, ListOfMoves),
+	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
+	length(ListOfWinning, V),
+	V \= 0, 
+	Value is V.
+
+
 value(Board, Player, Value):-	
-	(gameOver(Board, Player), Value = 1;
+	(gameOver(Board, Player), Value = 3;
+	isWinningPosition(Board, Player, V1), Value is V1;
+	Opponent is Player mod 2 + 1,
+	isWinningPosition(Board, Opponent, V2), Value is 0 - V2;
 	Value = 0).
 
-findWinningMoves(_, _, [], []).
+findWinningMoves(_, _, [], [], [], [], [], [], []).
 
-findWinningMoves(Board, Player, [H|T], ListOfWinning):-
-	findWinningMoves(Board, Player, T, NewListOfWinning),
-	move(H, Board, TmpBoard),
+listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves):-
+	listMovesByValue(Board, Player, [Move|ListOfMoves], NewListWinning, NewList2WinningMoves, NewList1WinningMove, NewListNeutral, NewList1LosingMove, NewList2LosingMoves),
+	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-	(Value = 1, append(NewListOfWinning, [H], ListOfWinning);
-	Value = 0, append(NewListOfWinning, [], ListOfWinning)).
+    (Value = 3, append(NewListWinning, [Move], ListWinning);
+	 Value = 2, append(NewList2WinningMoves, [Move], List2WinningMoves);
+	 Value = 1, append(NewList1WinningMove, [Move], List1WinningMove);
+	 Value = 0, append(NewListNeutral, [Move], ListNeutral);
+	 Value = -1, append(NewList1LosingMove, [Move], List1LosingMove);
+	 Value = -2, append(NewList2LosingMoves, [Move], List2LosingMoves)).
+
+/*findWinningMoves(_, _, [], []).
+
+findWinningMoves(Board, Player, [Move|ListOfMoves], ListOfWinning):-
+	findWinningMoves(Board, Player, ListOfMoves, NewListOfWinning),
+	move(Move, Board, TmpBoard),
+	value(TmpBoard, Player, Value),
+	(Value = 4, append(NewListOfWinning, [Move], ListOfWinning);
+	Value = 0, append(NewListOfWinning, [], ListOfWinning)).*/
+
 
 moveAILevel1(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
@@ -361,6 +388,10 @@ moveAILevel1(Board, Player, OriginalBoard, Move):-
 
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
-	findWinningMoves(Board, Player, ListOfMoves, ListOfWinning),
-	(length(ListOfWinning, 0), random_member(Move, ListOfMoves);
-	random_member(Move, ListOfWinning)).	
+	listMovesByValue(Board, Player, ListOfMoves, ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves),
+	(\+length(ListWinning, 0), random_member(Move, ListWinning);
+	\+length(List2WinningMoves, 0), random_member(Move, List2WinningMoves);
+	\+length(List1WinningMove, 0), random_member(Move, List1WinningMove);
+	\+length(ListNeutral, 0), random_member(Move, ListNeutral);
+	\+length(List1LosingMove, 0), random_member(Move, List1LosingMove);
+	\+length(List2LosingMoves, 0), random_member(Move, List2LosingMoves)).
