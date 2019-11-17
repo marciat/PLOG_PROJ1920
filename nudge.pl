@@ -58,12 +58,9 @@ play:-
 	game(Mode, Level, Board, Board, 2, 0, 0).
 
 /*
-Level
-0 - pvp
-1 - player vs cpu1 / cpu1 vs cpu1
-2 - player vs cpu2 / cpu2 vs cpu2
-3 - cpu1 vs cpu2
-4 - cpu2 vs cpu1
+* chooseBoard(-BoardNumber).
+* BoardNumber - starting board number (1-4)
+* returns the starting board chosen by the user
 */
 chooseBoard(BoardNumber):-
 	write('SELECT THE STARTING BOARD POSITION'),
@@ -300,7 +297,6 @@ incrementPosition('D', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCH = H,
 	incrementPosition('D', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
 
-
 incrementPosition('L', [Increment,V|_], Increment, _, [0,V]).
 
 incrementPosition('L', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
@@ -308,7 +304,6 @@ incrementPosition('L', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCH is CH-1,
 	NewCV = V,
 	incrementPosition('L', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
-
 
 incrementPosition('R', [0,V|_], Increment, _, [Increment,V]).
 
@@ -318,14 +313,18 @@ incrementPosition('R', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCV = V,
 	incrementPosition('R', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
 
-
+/* positionFromDirection(+Direction, +Coordinates, +Increment, -NewH, -NewV)
+ * Direction - direction for the increment
+ * Coordinates - starting coordinates
+ * Increment - position increment
+ * NewH - new horizontal coordinate after increment
+ * NewV - new vertical coordinate after increment
+ */
 positionFromDirection(Direction, Coordinates, Increment, NewH, NewV):-
 	[H,V|_] = Coordinates,
 	incrementPosition(Direction, Coordinates, Increment, [H, V], [FH, FV]),
 	NewH = FH,
 	NewV = FV.
-	
-
 
 /* simpleMove(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -384,6 +383,11 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move):-
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
 	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction])).
 
+/* validateLineMove(+Board, +Player, +MoveInfo)
+ * Board - current game board
+ * Player - current player
+ * MoveInfo - information about the move, list with coordinates of disc and direction to move it
+ */
 validateLineMove(Board, Player, MoveInfo):-
 	[Horizontal, Vertical | D] = MoveInfo,
 	[Direction | _] = D,
@@ -396,9 +400,15 @@ validateLineMove(Board, Player, MoveInfo):-
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs), !,
 		OpponentDiscs < PlayerDiscs)).
 
+/* checkResetBoard(+Board, +OriginalBoard, +Move)
+ * Board - current game board
+ * OriginalBoard - game board in the beginning of player's turn
+ * Move - information about the move, list with coordinates of disc and direction to move it
+ */
 checkResetBoard(Board, OriginalBoard, Move):-
 	move(Move, Board, NewBoard), !,
 	NewBoard \= OriginalBoard.
+
 
 chooseMove(Board, Player, OriginalBoard, 1, Move):-
 	moveAILevel1(Board, Player, OriginalBoard, Move).
@@ -446,6 +456,13 @@ value(Board, Player, Value):-
 
 listMovesByValue(_, _, [], [[],[],[],[],[],[]]).
 
+/* listMovesByValue(+Board, +Player, +ListOfMoves, -ListWinnings)
+ * Board - current game board
+ * Player - current player
+ * ListOfMoves - list of possible valid movements
+ * ListWinnings - list with lists of movements by value
+ * sorts possible moves by value
+ */
 listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinnings):-
 	listMovesByValue(Board, Player, ListOfMoves, NewListWinnings),
 	move(Move, Board, TmpBoard),
