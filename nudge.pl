@@ -13,19 +13,86 @@ black discs - 2
 /* initBoard(-Board)
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
-initBoard(Board):-
-	Board=[[0,0,0,0,0],
-	       [0,2,2,2,0],
+
+
+/*Board=[[0,0,0,0,0],
+	       [0,2,0,0,0],
 	       [0,0,0,0,0],
+	       [2,1,1,1,2],
+	       [0,0,0,0,0]].
+*/
+
+initBoard(1, Board):-
+	Board=[[0,0,0,0,0],
 	       [0,1,1,1,0],
+	       [0,0,0,0,0],
+	       [0,2,2,2,0],
 	       [0,0,0,0,0]].
 
+initBoard(2, Board):-
+	Board=[[1,0,1,0,1],
+	       [0,0,0,0,0],
+	       [0,0,0,0,0],
+	       [0,0,0,0,0],
+	       [2,0,2,0,2]].
+		   
+initBoard(3, Board):-
+	Board=[[0,0,1,0,0],
+	       [0,1,0,1,0],
+	       [0,0,0,0,0],
+	       [0,2,0,2,0],
+	       [0,0,2,0,0]].
+		   
+initBoard(4, Board):-
+	Board=[[0,1,0,1,0],
+	       [0,0,1,0,0],
+	       [0,0,0,0,0],
+	       [0,0,2,0,0],
+	       [0,2,0,2,0]].
 /* play
  * starts game */
 play:-
-	initBoard(Board),
+	chooseBoard(BoardNumber),
+	initBoard(BoardNumber, Board),
 	readGameMode(Mode, Level),
-	game(Mode, Level, Board, Board, 1, 0, 0).
+	game(Mode, Level, Board, Board, 2, 0, 0).
+
+/*
+Level
+0 - pvp
+1 - player vs cpu1 / cpu1 vs cpu1
+2 - player vs cpu2 / cpu2 vs cpu2
+3 - cpu1 vs cpu2
+4 - cpu2 vs cpu1
+*/
+chooseBoard(BoardNumber):-
+	write('SELECT THE STARTING BOARD POSITION'),
+	nl,nl,
+	write('Board 1:'), nl,
+	initBoard(1, Board1),
+	getBoardDimensions(Board1, _, Columns1),
+	printBoard(Board1, 49, Columns1),
+	nl,
+	write('Board 2:'), nl,
+	initBoard(2, Board2),
+	getBoardDimensions(Board2, _, Columns2),
+	printBoard(Board2, 49, Columns2),
+	nl,
+	write('Board 3:'), nl,
+	initBoard(3, Board3),
+	getBoardDimensions(Board3, _, Columns3),
+	printBoard(Board3, 49, Columns3),
+	nl,
+	write('Board 4:'), nl,
+	initBoard(4, Board4),
+	getBoardDimensions(Board4, _, Columns4),
+	printBoard(Board4, 49, Columns4),
+	repeat,
+	nl,
+	write('Starting Board (1, 2, 3, 4):'),
+	getCodeInput(Number),
+	(Number = 49; Number = 50; Number = 51; Number = 52), !,
+	BoardNumber is Number - 48.
 
 /*
 Level
@@ -383,7 +450,8 @@ listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinnings):-
 	listMovesByValue(Board, Player, ListOfMoves, NewListWinnings),
 	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-    (Value = 3, nth0(0, NewListWinnings, CurrList), 
+	write(Value), write(Move), nl,
+    (Value >= 3, nth0(0, NewListWinnings, CurrList), 
 				append(CurrList, [Move], UpdatedList),
 				replace(NewListWinnings, 1, UpdatedList, ListWinnings);
 
@@ -403,7 +471,7 @@ listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinnings):-
 				append(CurrList, [Move], UpdatedList),
 				replace(NewListWinnings, 5, UpdatedList, ListWinnings);
 
-	 Value = -2, nth0(5, NewListWinnings, CurrList), 
+	 Value =< -2, nth0(5, NewListWinnings, CurrList), 
 				append(CurrList, [Move], UpdatedList),
 				replace(NewListWinnings, 6, UpdatedList, ListWinnings)).
 
