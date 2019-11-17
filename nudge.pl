@@ -76,8 +76,16 @@ game(_, _, _, _, _, _, 1):-
 
 game(_, _, _, _, _, _, 2):-
 	displayWinner(2).
-/* Mode Board OriginalBoard Player Move Winner
-*/
+
+/* game(+Mode, +Board, +OriginalBoard, +Player, +MoveNr, +Winner).
+ * Mode - number representing the game mode
+ * Board - current game board
+ * OriginalBoard - board at the state before the player's first move
+ * Player - current active player
+ * MoveNr - current movement for active player (0 or 1)
+ * Winner - game's winner (0 until game ends)
+ * displays board, checks for game over, and executes moves
+ */
 game(Mode, Level, Board, OriginalBoard, Player, 0, _):-
 	displayGame(Board, Player, 0),
 	gameOver(Board, Winner),
@@ -94,6 +102,18 @@ playGame(_, _, _, _, _, _, 1, _, _).
 	
 playGame(_, _, _, _, _, _, 2, _, _).
 
+/* playGame(+Mode, +Level, +Board, +OriginalBoard, +Player, +MoveNr, +Winner, -NewBoard, -NewPlayer).
+ * Mode - number representing the game mode
+ * Level - number representing the AI difficulty level
+ * Board - current game board
+ * OriginalBoard - board at the state before the player's first move
+ * Player - current active player
+ * MoveNr - current movement for active player (0 or 1)
+ * Winner - game's winner (0 until game ends)
+ * NewBoard - game board after executing the move
+ * NewPlayer - player who moves next
+ * calls function to read move (player) or randomize move (AI) and updates board and player
+ */
 playGame(Mode, Level, Board, OriginalBoard, 1, 0, _, NewBoard, NewPlayer):-
 	(Mode = 2, chooseMove(Board, 1, OriginalBoard, Level, Move);
 	readMove(Board, 1, 0, OriginalBoard, Move)),
@@ -193,15 +213,6 @@ move(Move, Board, NewBoard):-
 	nth1(4, Move, Type),
 	(Type = 'D', simpleMove(Move, Board, NewBoard);
 	Type = 'L', multipleMove(Move, Board, NewBoard)).
-
-/*incrementPosition('U', [H,Increment|_], 0, H, Increment, [0, H]).
-
-incrementPosition('D', [H,0|_], Increment, H, Increment, [H, ]).
-
-incrementPosition('L', [Increment,V|_], Increment, 0, V).
-
-incrementPosition('R', [0,V|_], Increment, Increment, V).*/
-/*///////////////////////////////////////////////*/
 
 %incrementPosition(+Direction, +Coordinates, +Increment, +Candidates, -Final)
 
@@ -336,6 +347,13 @@ chooseMove(Board, Player, OriginalBoard, 4, Move):-
 	(Player = 1, moveAILevel2(Board, Player, OriginalBoard, Move);
 	 Player = 2, moveAILevel1(Board, Player, OriginalBoard, Move)).
 
+/* validMoves(+Board, +Player, +OriginalBoard, -ListOfMoves)
+ * Board - current game board
+ * Player - current player
+ * Original Board - game board in the beginning of player's turn
+ * ListOfMoves - list of valid moves
+ * returns a list with all valid moves for current player
+ */
 validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	(setof([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD);
 	ListOfMovesD = []),
@@ -365,7 +383,6 @@ listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinning, List2WinningMov
 	listMovesByValue(Board, Player, ListOfMoves, NewListWinning, NewList2WinningMoves, NewList1WinningMove, NewListNeutral, NewList1LosingMove, NewList2LosingMoves),
 	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-	%write(Value), nl,
     (Value = 3, append(NewListWinning, [Move], ListWinning), 
 				append(NewList2WinningMoves, [], List2WinningMoves), 
 				append(NewList1WinningMove, [], List1WinningMove), 
@@ -416,21 +433,27 @@ findWinningMoves(Board, Player, [Move|ListOfMoves], ListOfWinning):-
 	(gameOver(TmpBoard, Player), append(NewListOfWinning, [Move], ListOfWinning);
 	append(NewListOfWinning, [], ListOfWinning)).
 
-
+/* moveAILevel1(+Board, +Player, +OriginalBoard, -Move)
+ * Board - current game board
+ * Player - current player
+ * Original Board - game board in the beginning of player's turn
+ * Move - chosen move
+ * returns with a randomly selected possible move
+ */
 moveAILevel1(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	random_member(Move, ListOfMoves).
 
+/* moveAILevel2(+Board, +Player, +OriginalBoard, -Move)
+ * Board - current game board
+ * Player - current player
+ * Original Board - game board in the beginning of player's turn
+ * Move - chosen move 
+ * returns with a randomly selected possible move with highest value
+ */
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	listMovesByValue(Board, Player, ListOfMoves, ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves),
-	/*write(ListOfMoves), nl,
-	write(ListWinning),
-	write(List2WinningMoves),
-	write(List1WinningMove),
-	write(ListNeutral),
-	write(List1LosingMove),
-	write(List2LosingMoves),*/
 	(\+length(ListWinning, 0), random_member(Move, ListWinning);
 	\+length(List2WinningMoves, 0), random_member(Move, List2WinningMoves);
 	\+length(List1WinningMove, 0), random_member(Move, List1WinningMove);
