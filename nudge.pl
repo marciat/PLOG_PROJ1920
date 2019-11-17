@@ -340,7 +340,7 @@ validMoves(Board, Player, OriginalBoard, ListOfMoves):-
 	(setof([HorizontalD, VerticalD, DirectionD, 'D'], isPlayerMoveValid(Board, Player, OriginalBoard, [HorizontalD, VerticalD, DirectionD, 'D']), ListOfMovesD);
 	ListOfMovesD = []),
 	(setof([Horizontal, Vertical, Direction, 'L'], isPlayerMoveValid(Board, Player, OriginalBoard, [Horizontal, Vertical, Direction, 'L']), ListOfMovesL);
-	ListOfMovesD = []),
+	ListOfMovesL = []),
 	append(ListOfMovesD, ListOfMovesL, ListOfMoves).
 
 
@@ -359,27 +359,62 @@ value(Board, Player, Value):-
 	isWinningPosition(Board, Opponent, V2), Value is 0 - V2;
 	Value = 0).
 
-findWinningMoves(_, _, [], [], [], [], [], [], []).
+listMovesByValue(_, _, [], [], [], [], [], [], []).
 
 listMovesByValue(Board, Player, [Move|ListOfMoves], ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves):-
-	listMovesByValue(Board, Player, [Move|ListOfMoves], NewListWinning, NewList2WinningMoves, NewList1WinningMove, NewListNeutral, NewList1LosingMove, NewList2LosingMoves),
+	listMovesByValue(Board, Player, ListOfMoves, NewListWinning, NewList2WinningMoves, NewList1WinningMove, NewListNeutral, NewList1LosingMove, NewList2LosingMoves),
 	move(Move, Board, TmpBoard),
 	value(TmpBoard, Player, Value),
-    (Value = 3, append(NewListWinning, [Move], ListWinning);
-	 Value = 2, append(NewList2WinningMoves, [Move], List2WinningMoves);
-	 Value = 1, append(NewList1WinningMove, [Move], List1WinningMove);
-	 Value = 0, append(NewListNeutral, [Move], ListNeutral);
-	 Value = -1, append(NewList1LosingMove, [Move], List1LosingMove);
-	 Value = -2, append(NewList2LosingMoves, [Move], List2LosingMoves)).
+	%write(Value), nl,
+    (Value = 3, append(NewListWinning, [Move], ListWinning), 
+				append(NewList2WinningMoves, [], List2WinningMoves), 
+				append(NewList1WinningMove, [], List1WinningMove), 
+				append(NewListNeutral, [], ListNeutral), 
+				append(NewList1LosingMove, [], List1LosingMove), 
+				append(NewList2LosingMoves, [], List2LosingMoves);
 
-/*findWinningMoves(_, _, [], []).
+	 Value = 2, append(NewListWinning, [], ListWinning), 
+				append(NewList2WinningMoves, [Move], List2WinningMoves), 
+				append(NewList1WinningMove, [], List1WinningMove), 
+				append(NewListNeutral, [], ListNeutral), 
+				append(NewList1LosingMove, [], List1LosingMove), 
+				append(NewList2LosingMoves, [], List2LosingMoves);
+
+	 Value = 1, append(NewListWinning, [], ListWinning), 
+				append(NewList2WinningMoves, [], List2WinningMoves), 
+				append(NewList1WinningMove, [Move], List1WinningMove), 
+				append(NewListNeutral, [], ListNeutral), 
+				append(NewList1LosingMove, [], List1LosingMove), 
+				append(NewList2LosingMoves, [], List2LosingMoves);
+
+	 Value = 0, append(NewListWinning, [], ListWinning), 
+				append(NewList2WinningMoves, [], List2WinningMoves), 
+				append(NewList1WinningMove, [], List1WinningMove), 
+				append(NewListNeutral, [Move], ListNeutral), 
+				append(NewList1LosingMove, [], List1LosingMove), 
+				append(NewList2LosingMoves, [], List2LosingMoves);
+
+	 Value = -1, append(NewListWinning, [], ListWinning), 
+				append(NewList2WinningMoves, [], List2WinningMoves), 
+				append(NewList1WinningMove, [], List1WinningMove), 
+				append(NewListNeutral, [], ListNeutral), 
+				append(NewList1LosingMove, [Move], List1LosingMove), 
+				append(NewList2LosingMoves, [], List2LosingMoves);
+
+	 Value = -2, append(NewListWinning, [], ListWinning), 
+				append(NewList2WinningMoves, [], List2WinningMoves), 
+				append(NewList1WinningMove, [], List1WinningMove), 
+				append(NewListNeutral, [], ListNeutral), 
+				append(NewList1LosingMove, [], List1LosingMove), 
+				append(NewList2LosingMoves, [Move], List2LosingMoves)).
+
+findWinningMoves(_, _, [], []).
 
 findWinningMoves(Board, Player, [Move|ListOfMoves], ListOfWinning):-
 	findWinningMoves(Board, Player, ListOfMoves, NewListOfWinning),
 	move(Move, Board, TmpBoard),
-	value(TmpBoard, Player, Value),
-	(Value = 4, append(NewListOfWinning, [Move], ListOfWinning);
-	Value = 0, append(NewListOfWinning, [], ListOfWinning)).*/
+	(gameOver(TmpBoard, Player), append(NewListOfWinning, [Move], ListOfWinning);
+	append(NewListOfWinning, [], ListOfWinning)).
 
 
 moveAILevel1(Board, Player, OriginalBoard, Move):-
@@ -389,6 +424,13 @@ moveAILevel1(Board, Player, OriginalBoard, Move):-
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
 	listMovesByValue(Board, Player, ListOfMoves, ListWinning, List2WinningMoves, List1WinningMove, ListNeutral, List1LosingMove, List2LosingMoves),
+	/*write(ListOfMoves), nl,
+	write(ListWinning),
+	write(List2WinningMoves),
+	write(List1WinningMove),
+	write(ListNeutral),
+	write(List1LosingMove),
+	write(List2LosingMoves),*/
 	(\+length(ListWinning, 0), random_member(Move, ListWinning);
 	\+length(List2WinningMoves, 0), random_member(Move, List2WinningMoves);
 	\+length(List1WinningMove, 0), random_member(Move, List1WinningMove);
