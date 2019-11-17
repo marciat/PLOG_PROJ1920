@@ -14,11 +14,11 @@ black discs - 2
  * Board - variable to be initialized with a new board
  * initializes Board with a valid initial board layout */
 initBoard(Board):-
-	Board=[[0,0,0,0,0],
-	       [0,1,1,1,0],
-	       [0,0,0,0,0],
-	       [0,2,2,2,0],
-	       [0,0,0,0,0]].
+	Board=[[0,0,0,2,0],
+	       [0,0,0,2,0],
+	       [0,0,0,2,0],
+	       [0,0,0,1,0],
+	       [0,0,1,1,0]].
 
 /* play
  * starts game */
@@ -304,7 +304,7 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move):-
 	validCoords(Board, NewH, NewV),
 	checkResetBoard(Board, OriginalBoard, Move),
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
-	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction])).
+	Type = 'L', !, validateLineMove(Board, Player, [OldH, OldV, Direction])).
 
 validateLineMove(Board, Player, MoveInfo):-
 	[Horizontal, Vertical | D] = MoveInfo,
@@ -315,7 +315,7 @@ validateLineMove(Board, Player, MoveInfo):-
 	validCoords(Board, NewH, NewV),
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
-		countLineOfDiscs(Board, [Horizontal, Vertical], Direction, Opponent, OpponentDiscs), 
+		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs), !,
 		OpponentDiscs < PlayerDiscs)).
 
 checkResetBoard(Board, OriginalBoard, Move):-
