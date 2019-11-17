@@ -50,12 +50,9 @@ play:-
 	game(Mode, Level, Board, Board, 2, 0, 0).
 
 /*
-Level
-0 - pvp
-1 - player vs cpu1 / cpu1 vs cpu1
-2 - player vs cpu2 / cpu2 vs cpu2
-3 - cpu1 vs cpu2
-4 - cpu2 vs cpu1
+* chooseBoard(-BoardNumber).
+* BoardNumber - starting board number (1-4)
+* returns the starting board chosen by the user
 */
 chooseBoard(BoardNumber):-
 	write('SELECT THE STARTING BOARD POSITION'),
@@ -292,7 +289,6 @@ incrementPosition('D', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCH = H,
 	incrementPosition('D', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
 
-
 incrementPosition('L', [Increment,V|_], Increment, _, [0,V]).
 
 incrementPosition('L', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
@@ -300,7 +296,6 @@ incrementPosition('L', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCH is CH-1,
 	NewCV = V,
 	incrementPosition('L', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
-
 
 incrementPosition('R', [0,V|_], Increment, _, [Increment,V]).
 
@@ -310,14 +305,18 @@ incrementPosition('R', [H,V|_], Increment, [CH,CV|_], [FH,FV|_]):-
 	NewCV = V,
 	incrementPosition('R', [H,V], Increment, [NewCH, NewCV], [FH,FV])).
 
-
+/* positionFromDirection(+Direction, +Coordinates, +Increment, -NewH, -NewV)
+ * Direction - direction for the increment
+ * Coordinates - starting coordinates
+ * Increment - position increment
+ * NewH - new horizontal coordinate after increment
+ * NewV - new vertical coordinate after increment
+ */
 positionFromDirection(Direction, Coordinates, Increment, NewH, NewV):-
 	[H,V|_] = Coordinates,
 	incrementPosition(Direction, Coordinates, Increment, [H, V], [FH, FV]),
 	NewH = FH,
 	NewV = FV.
-	
-
 
 /* simpleMove(+Move, +Board, -NewBoard)
  * Move - information about the move
@@ -376,6 +375,11 @@ isPlayerMoveValid(Board, Player, OriginalBoard, Move):-
 	(Type = 'D', getPosition(Board, NewH, NewV, 0);
 	Type = 'L', validateLineMove(Board, Player, [OldH, OldV, Direction])).
 
+/* validateLineMove(+Board, +Player, +MoveInfo)
+ * Board - current game board
+ * Player - current player
+ * MoveInfo - information about the move, list with coordinates of disc and direction to move it
+ */
 validateLineMove(Board, Player, MoveInfo):-
 	[Horizontal, Vertical | D] = MoveInfo,
 	[Direction | _] = D,
@@ -388,9 +392,15 @@ validateLineMove(Board, Player, MoveInfo):-
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs), !,
 		OpponentDiscs < PlayerDiscs)).
 
+/* checkResetBoard(+Board, +OriginalBoard, +Move)
+ * Board - current game board
+ * OriginalBoard - game board in the beginning of player's turn
+ * Move - information about the move, list with coordinates of disc and direction to move it
+ */
 checkResetBoard(Board, OriginalBoard, Move):-
 	move(Move, Board, NewBoard), !,
 	NewBoard \= OriginalBoard.
+
 
 chooseMove(Board, Player, OriginalBoard, 1, Move):-
 	moveAILevel1(Board, Player, OriginalBoard, Move).
@@ -433,6 +443,14 @@ value(Board, Player, Value):-
 	 isWinningPosition(Board, Player), Value is 2;
 	 Value = 1).
 
+
+/* listMovesByValue(+Board, +Player, +ListOfMoves, -ListByValues)
+ * Board - current game board
+ * Player - current player
+ * ListOfMoves - list of possible valid movements
+ * ListByValues - list with lists of movements by value
+ * sorts possible moves by value
+ */
 listMovesByValue(_, _, [], [[],[],[],[]]).
 
 listMovesByValue(Board, Player, [Move|ListOfMoves], ListByValues):-
@@ -483,8 +501,8 @@ moveAILevel1(Board, Player, OriginalBoard, Move):-
  */
 moveAILevel2(Board, Player, OriginalBoard, Move):-
 	validMoves(Board, Player, OriginalBoard, ListOfMoves),
-	listMovesByValue(Board, Player, ListOfMoves, ListWinnings),
-	(\+nth1(1,ListWinnings,[]), nth1(1, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth1(2,ListWinnings,[]), nth1(2, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth1(3,ListWinnings,[]), nth1(3, ListWinnings, CurrList), random_member(Move, CurrList);
-	\+nth1(4,ListWinnings,[]), nth1(4, ListWinnings, CurrList), random_member(Move, CurrList)).
+	listMovesByValue(Board, Player, ListOfMoves, ListByValues),
+	(\+nth1(1,ListByValues,[]), nth1(1, ListByValues, CurrList), random_member(Move, CurrList);
+	\+nth1(2,ListByValues,[]), nth1(2, ListByValues, CurrList), random_member(Move, CurrList);
+	\+nth1(3,ListByValues,[]), nth1(3, ListByValues, CurrList), random_member(Move, CurrList);
+	\+nth1(4,ListByValues,[]), nth1(4, ListByValues, CurrList), random_member(Move, CurrList)).
