@@ -409,7 +409,9 @@ validateLineMove(Board, Player, MoveInfo):-
 	(getPosition(Board, NewH, NewV, 0);
 		Opponent is Player mod 2 + 1,
 		countLineOfDiscs(Board, [NewH, NewV], Direction, Opponent, OpponentDiscs), !,
-		OpponentDiscs < PlayerDiscs)).
+		OpponentDiscs < PlayerDiscs,
+		positionFromDirection(Direction, [NewH,NewV], OpponentDiscs, NewEnemyH, NewEnemyV),
+		getPosition(Board, NewEnemyH, NewEnemyV, 0))).
 
 /* checkResetBoard(+Board, +OriginalBoard, +Move)
  * Board - current game board
