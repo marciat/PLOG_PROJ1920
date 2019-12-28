@@ -7,8 +7,9 @@
  */
 
 symbol(0, ' ').
-symbol(1, 'W').
-symbol(2, 'B').
+symbol(1, 'O').
+symbol(2, '@').
+symbol(3, '*').
 
 /*
  * white discs player - 1 - 'W'
