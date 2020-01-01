@@ -26,7 +26,7 @@ starry_night(Board, SolBoard):-
     global_cardinality([A5,B5,C5,D5,E5], [0-2,1-1,2-1,3-1]),
     /* simbolos iguais nao se tocam diagonalmente
     */
-    checkNoDiagonalsBoard(SolBoard,5,4),
+    checkNoDiagonalsBoard(SolBoard,5,5),
     checkOffBoardSymbols(Board, SolBoard),
     labeling([], SolBoard),
     LineA = [A1,A2,A3,A4,A5],
@@ -41,23 +41,44 @@ starry_night(Board, SolBoard):-
     write(LineD), nl,
     write(LineE).
 
+checkNoDiagonalsCell(Board, 1, Vertical):-
+    getBoardSide(Board,Side),
+    CellIndex is (Vertical-1) * Side + 1,
+    Cell1H is 2, Cell1V is Vertical - 1,
+    Cell1Index is (Cell1V-1) * Side + Cell1H,
+    domain([CellContent, Content1], 0, 3),
+    (CellContent #= 0 #\/ 
+    Content1 #\= CellContent),
+    element(CellIndex, Board, CellContent),
+    element(Cell1Index, Board, Content1).
+
+checkNoDiagonalsCell(Board, Horizontal, Vertical):-
+    getBoardSide(Board, Side),
+    Horizontal = Side,
+    CellIndex is (Vertical-1) * Side + Horizontal,
+    Cell1H is Horizontal - 1, Cell1V is Vertical - 1,
+    Cell1Index is (Cell1V-1) * Side + Cell1H,
+    domain([CellContent, Content1], 0, 3),
+    (CellContent #= 0 #\/ 
+    Content1 #\= CellContent),
+    element(CellIndex, Board, CellContent),
+    element(Cell1Index, Board, Content1).
+
 checkNoDiagonalsCell(Board, Horizontal, Vertical):-
     validCoords(Board, Horizontal, Vertical),
+    getBoardSide(Board, Side),
     % guardar simbolo da celula em causa
-    getPosition(Board, Horizontal, Vertical, CellContent),
-    % se a celula estiver vazia nao e necessario verificar diagonais
-    (CellContent #= 0;
-    % coordenadas das celulas que sao diagonais a celula em causa
+    CellIndex is (Vertical-1) * Side + Horizontal,
     Cell1H is Horizontal - 1, Cell1V is Vertical - 1,
+    Cell1Index is (Cell1V-1) * Side + Cell1H,
     Cell2H is Horizontal + 1, Cell2V is Vertical - 1,
-    Cell3H is Horizontal - 1, Cell3V is Vertical + 1,
-    Cell4H is Horizontal + 1, Cell4V is Vertical + 1,
-    getPosition(Board, Cell1H, Cell1V, Content1),
-    getPosition(Board, Cell2H, Cell2V, Content2),
-    getPosition(Board, Cell3H, Cell3V, Content3),
-    getPosition(Board, Cell4H, Cell4V, Content4),
-    % verificar se as diagonais sao coordenadas validas e, se forem, verificar que nao tem o mesmo simbolo
-    Content1 #\= CellContent, Content2 #\= CellContent, Content3 #\= CellContent, Content4 #\= CellContent).
+    Cell2Index is (Cell2V-1) * Side + Cell2H,
+    domain([CellContent, Content1, Content2], 0, 3),
+    (CellContent #= 0 #\/ 
+    (Content1 #\= CellContent #/\ Content2 #\= CellContent)),
+    element(CellIndex, Board, CellContent),
+    element(Cell1Index, Board, Content1),
+    element(Cell2Index, Board, Content2).
 
 checkNoDiagonalsLine(_,0,_).
 
@@ -67,13 +88,12 @@ checkNoDiagonalsLine(Board, Side, Line):-
     NewSide is Side - 1,
     checkNoDiagonalsLine(Board, NewSide, Line).
 
-checkNoDiagonalsBoard(_,_,0).
-checkNoDiagonalsBoard(_,_,-1).
+checkNoDiagonalsBoard(_,_,1).
 
 % fazer check de diagonais para as varias celulas, linha sim linha nao
 checkNoDiagonalsBoard(Board, Side, CurrLine):-
     checkNoDiagonalsLine(Board, Side, CurrLine),
-    NewLine is CurrLine - 2,
+    NewLine is CurrLine - 1,
     checkNoDiagonalsBoard(Board, Side, NewLine).
 
 /*
