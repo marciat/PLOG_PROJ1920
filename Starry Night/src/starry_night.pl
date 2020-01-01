@@ -5,41 +5,44 @@
 :- include('auxiliar.pl').
 
 % tabuleiros 5x5
-starry_night(Board, SolBoard):-
+starry_night(Board):-
     % board final com a solucao
-    SolBoard = [A1,A2,A3,A4,A5,B1,B2,B3,B4,B5,C1,C2,C3,C4,C5,D1,D2,D3,D4,D5,E1,E2,E3,E4,E5],
+    length(Board, BoardInputLength),
+    BoardSide is BoardInputLength // 2,
+    SolBoardLength is BoardSide * BoardSide,
+    length(SolBoard, SolBoardLength),
     /* dominio das celulas do tabuleiro
         0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
     */
     domain(SolBoard, 0, 3),
-    /* exatamente uma estrela e circulo de cada cor em cada linha e coluna
-    */
-    global_cardinality([A1,A2,A3,A4,A5], [0-2,1-1,2-1,3-1]),
-    global_cardinality([B1,B2,B3,B4,B5], [0-2,1-1,2-1,3-1]),
-    global_cardinality([C1,C2,C3,C4,C5], [0-2,1-1,2-1,3-1]),
-    global_cardinality([D1,D2,D3,D4,D5], [0-2,1-1,2-1,3-1]),
-    global_cardinality([E1,E2,E3,E4,E5], [0-2,1-1,2-1,3-1]),
-    global_cardinality([A1,B1,C1,D1,E1], [0-2,1-1,2-1,3-1]),
-    global_cardinality([A2,B2,C2,D2,E2], [0-2,1-1,2-1,3-1]),
-    global_cardinality([A3,B3,C3,D3,E3], [0-2,1-1,2-1,3-1]),
-    global_cardinality([A4,B4,C4,D4,E4], [0-2,1-1,2-1,3-1]),
-    global_cardinality([A5,B5,C5,D5,E5], [0-2,1-1,2-1,3-1]),
-    /* simbolos iguais nao se tocam diagonalmente
-    */
-    checkNoDiagonalsBoard(SolBoard,5,5),
+    checkOneSymbolPerLineAndColumn(SolBoard, BoardSide, BoardSide),
+    checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(Board, SolBoard),
     labeling([], SolBoard),
-    LineA = [A1,A2,A3,A4,A5],
-    LineB = [B1,B2,B3,B4,B5],
-    LineC = [C1,C2,C3,C4,C5],
-    LineD = [D1,D2,D3,D4,D5],
-    LineE = [E1,E2,E3,E4,E5],
+    getLine(SolBoard, 1, LineA),
+    getLine(SolBoard, 2, LineB),
+    getLine(SolBoard, 3, LineC),
+    getLine(SolBoard, 4, LineD),
+    getLine(SolBoard, 5, LineE),
+    getLine(SolBoard, 6, LineF),
     nl,
     write(LineA), nl,
     write(LineB), nl,
     write(LineC), nl,
     write(LineD), nl,
-    write(LineE).
+    write(LineE), nl,
+    write(LineF).
+
+checkOneSymbolPerLineAndColumn(_,_,0).
+
+checkOneSymbolPerLineAndColumn(Board, Side, CurrentIndex):-
+    getLine(Board, CurrentIndex, Line),
+    getColumn(Board, CurrentIndex, Column),
+    ZerosPerLine is Side - 3,
+    global_cardinality(Line, [0-ZerosPerLine,1-1,2-1,3-1]),
+    global_cardinality(Column, [0-ZerosPerLine,1-1,2-1,3-1]),
+    NewIndex is CurrentIndex - 1,
+    checkOneSymbolPerLineAndColumn(Board, Side, NewIndex).
 
 checkNoDiagonalsCell(Board, 1, Vertical):-
     getBoardSide(Board,Side),
@@ -112,7 +115,7 @@ checkOffBoardSymbols(Board, SolBoard, Side, CurrentBoardIndex):-
     (CurrentBoardIndex > Side,
     ColIndex is CurrentBoardIndex - Side,
     checkOffBoardColumn(Board, SolBoard, Side, ColIndex); 
-    checkOffBoardLine(Board, SolBoard, CurrentBoardIndex)),
+    checkOffBoardLine(Board, SolBoard, Side, CurrentBoardIndex)),
     NewBoardIndex is CurrentBoardIndex + 1,
     checkOffBoardSymbols(Board, SolBoard, Side, NewBoardIndex).
 
@@ -120,7 +123,7 @@ checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn):-
     getColumn(SolBoard, CurrentColumn, Column),
     OffSymbolIndex is Side + CurrentColumn,
     nth1(OffSymbolIndex, Board, OffSymbol),
-    domain([StarIndex, BlackIndex, WhiteIndex], 1, 5),
+    domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
@@ -132,10 +135,10 @@ checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn):-
     element(BlackIndex, Column, 2),
     element(WhiteIndex, Column, 1).
 
-checkOffBoardLine(Board, SolBoard, CurrentLine):-
+checkOffBoardLine(Board, SolBoard, Side, CurrentLine):-
     getLine(SolBoard, CurrentLine, Line),
     nth1(CurrentLine, Board, OffSymbol),
-    domain([StarIndex, BlackIndex, WhiteIndex], 1, 5),
+    domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
