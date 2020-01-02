@@ -19,19 +19,7 @@ starry_night(Board):-
     checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(Board, SolBoard),
     labeling([], SolBoard),
-    getLine(SolBoard, 1, LineA),
-    getLine(SolBoard, 2, LineB),
-    getLine(SolBoard, 3, LineC),
-    getLine(SolBoard, 4, LineD),
-    getLine(SolBoard, 5, LineE),
-    getLine(SolBoard, 6, LineF),
-    nl,
-    write(LineA), nl,
-    write(LineB), nl,
-    write(LineC), nl,
-    write(LineD), nl,
-    write(LineE), nl,
-    write(LineF).
+    displayPuzzle(Board,SolBoard).
 
 checkOneSymbolPerLineAndColumn(_,_,0).
 

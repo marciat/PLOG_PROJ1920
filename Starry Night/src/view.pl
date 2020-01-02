@@ -1,41 +1,14 @@
-%:- include('auxiliar.pl').
-
-/*
- * empty cells - 0 - ' '
- * white discs - 1 - 'W'
- * black discs - 2 - 'B'
- */
-
 symbol(0, ' ').
 symbol(1, 'O').
 symbol(2, '@').
 symbol(3, '*').
 
-/*
- * white discs player - 1 - 'W'
- * black discs player - 2- 'B'
- */
 
-player_symbol(1, 'W').
-player_symbol(2, 'B').
-
-
-/* displayGame(+Board, +Player, +Move)
- * Board - Board to be displayed
- * Player - current player number
- * Move - current player move number
- * displays the current game state
- * prints horizontal coordinates, board and player info */
-displayGame(Board, Player, Move):-
-	nl, nl,
-	[H|_] = Board, 
-	write('  '),
-	printHorizontalCoordinates(H, 65),
-	nl,
-	getBoardDimensions(Board, _, Columns),
-	printBoard(Board, 49, Columns),
-	nl, nl,
-	printPlayer(Player, Move),
+displayPuzzle(Board, SolBoard):-
+	nl, nl, 
+	getBoardSide(SolBoard, Side),
+	boardToLists(SolBoard, MatrixBoard),
+	printBoard(MatrixBoard, 1, Side),
 	nl, nl. 
 
 /* printBoard(+Board, +LineNr, +Columns)
@@ -44,28 +17,21 @@ displayGame(Board, Player, Move):-
  * Columns - Number of board columns */
 
 % if the first line is being printed, print top border and line contents
-printBoard([L|T], 49, Columns):-
-	write('   '),
+printBoard([L|T], 1, Columns):-
 	put_code(201), printTopBorder(Columns),
-	put_code(49),
-	write('  '),
 	printLine(L),
 	nl,
-	printBoard(T, 50, Columns).
+	printBoard(T, 2, Columns).
 
 % if all lines have been printed, print only the bottom border
 printBoard([], _, Columns):-
-	write('   '),
 	put_code(200),
 	printBottomBorder(Columns),
 	put_code(188), nl.
 
 % for the rest of the lines, print divider and line contents
 printBoard([L|T], LineNr, Columns):-
-	write('   '),
 	put_code(204), printDivider(Columns), put_code(185), nl,
-	put_code(LineNr),
-	write('  '),
 	printLine(L),
 	nl,
 	NewLineNr is LineNr + 1,
@@ -99,21 +65,6 @@ printCell(C):-
 	write(' '),
 	write(S),
 	write(' ').
-
-
-/* printHorizontalCoordinates(+BoardLine, +LetterCode)
- * BoardLine - Line from board, used to recursively go through the number of columns
- * LetterCode - ASCII code of the letter of the horizontal currently currently being printed */
-
-% if there are no more columns there is nothing to print
-printHorizontalCoordinates([], _).
-
-% print letter of the horizontal coordinate, increment letter ASCII code
-printHorizontalCoordinates([_|T], LetterCode):-
-	write('   '),
-	put_code(LetterCode),
-	NewLetterCode is LetterCode + 1,
-	printHorizontalCoordinates(T,NewLetterCode).
 
 /* printDivider(+NrColumns)
  * NrColumns - number of columns to be printed
@@ -161,24 +112,3 @@ printBottomBorder(NrColumns):-
 	put_code(202),
 	NewNr is NrColumns - 1,
 	printBottomBorder(NewNr).
-
-/* printPlayer(+Player, +Move)
- * Player - current player
- * Move - player's current move
- * prints current player symbol and player's current move */
-printPlayer(Player, Move):-
-	write('Player '),
-	player_symbol(Player, S),
-	write(S),
-	write('  -  Move '),
-	write(Move).
-
-/* displayWinner(+Winner)
- * Winner - game winner
- * prints that game has ended and the winner*/
-displayWinner(Winner):-
-	write('Game Over! Player '),
-	player_symbol(Winner, S),
-	write(S),
-	write(' won!'), nl.
-

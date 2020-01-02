@@ -41,3 +41,17 @@ getSublist(List, Index, Nr, Sublist):-
 	nth1(IndexInList, List, Element),!,
 	append(TmpSublist, [Element], Sublist).
 
+boardToLists(Board, Matrix):-
+	getBoardSide(Board, Side),
+	boardToLists(Board, Side, 1, Matrix).
+
+boardToLists(Board, Side, Side, Matrix):-
+	getLine(Board, Side, Line),
+	Matrix = [Line].
+
+boardToLists(Board, Side, CurrentLine, Matrix):-
+	NewLine is CurrentLine + 1,
+	boardToLists(Board, Side, NewLine, TmpMatrix),
+	getLine(Board, CurrentLine, Line),
+	append([Line], TmpMatrix, Matrix).
+	  
