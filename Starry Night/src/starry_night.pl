@@ -4,6 +4,7 @@
 :- include('auxiliar.pl').
 
 starry_night(Board):-
+    reset_timer,
     % board final com a solucao
     length(Board, BoardInputLength),
     BoardSide is BoardInputLength // 2,
@@ -17,7 +18,7 @@ starry_night(Board):-
     checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(Board, SolBoard),
     labeling([], SolBoard),
-    statistics,
+    print_time,
     displayPuzzle(Board,SolBoard).
 
 checkOneSymbolPerLineAndColumn(_,_,0).
@@ -136,3 +137,10 @@ checkOffBoardLine(Board, SolBoard, Side, CurrentLine):-
     element(StarIndex, Line, 3),
     element(BlackIndex, Line, 2),
     element(WhiteIndex, Line, 1).
+
+reset_timer :- statistics(walltime,_).	
+print_time :-
+	statistics(walltime,[_,T]),
+	TS is ((T//10)*10)/1000,
+	nl, write('Time: '), write(T), write('ms'), nl, nl.
+
