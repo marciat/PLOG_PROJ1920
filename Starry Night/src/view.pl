@@ -8,7 +8,7 @@ displayPuzzle(Board, SolBoard):-
 	nl, nl, 
 	getBoardSide(SolBoard, Side),
 	boardToLists(SolBoard, MatrixBoard),
-	printBoard(MatrixBoard, 1, Side),
+	printBoard(Board, MatrixBoard, 1, Side),
 	nl, nl. 
 
 /* printBoard(+Board, +LineNr, +Columns)
@@ -16,40 +16,47 @@ displayPuzzle(Board, SolBoard):-
  * LineNr - Index of line currently being printed 
  * Columns - Number of board columns */
 
-% if the first line is being printed, print top border and line contents
-printBoard([L|T], 1, Columns):-
-	put_code(201), printTopBorder(Columns),
-	printLine(L),
+% if the first line is being printed, print horizontal symbols, top border and line contents
+printBoard(Board, [L|T], 1, Side):-
+	HorizontalSymbolsStart is Side + 1,
+	getSublist(Board, HorizontalSymbolsStart, Side, HorizontalSymbols),
+	printHorizontalSymbols(HorizontalSymbols),
+	put_code(201), printTopBorder(Side),
+	nth1(1, Board, Symbol),
+	printLine(Symbol,L),
 	nl,
-	printBoard(T, 2, Columns).
+	printBoard(Board, T, 2, Side).
 
 % if all lines have been printed, print only the bottom border
-printBoard([], _, Columns):-
+printBoard(_, [], _, Columns):-
 	put_code(200),
 	printBottomBorder(Columns),
 	put_code(188), nl.
 
 % for the rest of the lines, print divider and line contents
-printBoard([L|T], LineNr, Columns):-
+printBoard(Board, [L|T], LineNr, Columns):-
 	put_code(204), printDivider(Columns), put_code(185), nl,
-	printLine(L),
+	nth1(LineNr, Board, Symbol),
+	printLine(Symbol,L),
 	nl,
 	NewLineNr is LineNr + 1,
-	printBoard(T, NewLineNr, Columns).
+	printBoard(Board, T, NewLineNr, Columns).
 
 /* printLine(+Line)
  * Line - board line to be printed
  * prints a board line */
 
-% if all cells have been printed, print only the vertical divider
-printLine([]):-
-	put_code(186).
+% if all cells have been printed, print the vertical divider and symbol outside line
+printLine(Symbol, []):-
+	put_code(186),
+	symbol(Symbol, S),
+	write(S).
 
 % print vertical divider and cell content
-printLine([C|T]):-
+printLine(Symbol, [C|T]):-
 	put_code(186),
 	printCell(C),
-	printLine(T).
+	printLine(Symbol, T).
 
 
 /* printCell(+Cell)
@@ -112,3 +119,14 @@ printBottomBorder(NrColumns):-
 	put_code(202),
 	NewNr is NrColumns - 1,
 	printBottomBorder(NewNr).
+
+printHorizontalSymbols([]):- nl.
+
+printHorizontalSymbols(Symbols):-
+	[Head|Tail] = Symbols,
+	write('  '),
+	symbol(Head, S),
+	write(S),
+	write(' '),
+	printHorizontalSymbols(Tail).
+

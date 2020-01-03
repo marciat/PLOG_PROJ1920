@@ -1,10 +1,8 @@
 :- use_module(library(lists)).
-:- use_module(library(random)).
 :- use_module(library(clpfd)).
 :- include('view.pl').
 :- include('auxiliar.pl').
 
-% tabuleiros 5x5
 starry_night(Board):-
     % board final com a solucao
     length(Board, BoardInputLength),
@@ -19,6 +17,7 @@ starry_night(Board):-
     checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(Board, SolBoard),
     labeling([], SolBoard),
+    statistics,
     displayPuzzle(Board,SolBoard).
 
 checkOneSymbolPerLineAndColumn(_,_,0).
