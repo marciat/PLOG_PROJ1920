@@ -16,22 +16,23 @@ displayPuzzle(Board, SolBoard):-
  * LineNr - Index of line currently being printed 
  * Columns - Number of board columns */
 
-% if the first line is being printed, print horizontal symbols, top border and line contents
+% if the first line is being printed, print top border and line contents
 printBoard(Board, [L|T], 1, Side):-
-	HorizontalSymbolsStart is Side + 1,
-	getSublist(Board, HorizontalSymbolsStart, Side, HorizontalSymbols),
-	printHorizontalSymbols(HorizontalSymbols),
 	put_code(201), printTopBorder(Side),
 	nth1(1, Board, Symbol),
 	printLine(Symbol,L),
 	nl,
 	printBoard(Board, T, 2, Side).
 
-% if all lines have been printed, print only the bottom border
-printBoard(_, [], _, Columns):-
+% if all lines have been printed, print only the bottom border and horizontal symbols
+printBoard(Board, [], _, Columns):-
 	put_code(200),
 	printBottomBorder(Columns),
-	put_code(188), nl.
+	put_code(188),
+	nl,
+	HorizontalSymbolsStart is Columns + 1,
+	getSublist(Board, HorizontalSymbolsStart, Columns, HorizontalSymbols),
+	printHorizontalSymbols(HorizontalSymbols), nl.
 
 % for the rest of the lines, print divider and line contents
 printBoard(Board, [L|T], LineNr, Columns):-

@@ -1,7 +1,11 @@
 :- use_module(library(lists)).
+:- use_module(library(random)).
 :- use_module(library(clpfd)).
 :- include('view.pl').
 :- include('auxiliar.pl').
+
+%MODE: 0 - solve, 1 - generate
+
 
 starry_night(Board):-
     reset_timer,
@@ -16,10 +20,29 @@ starry_night(Board):-
     domain(SolBoard, 0, 3),
     checkOneSymbolPerLineAndColumn(SolBoard, BoardSide, BoardSide),
     checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
-    checkOffBoardSymbols(Board, SolBoard),
+    checkOffBoardSymbols(Board, SolBoard, 0),
     labeling([], SolBoard),
     print_time,
     displayPuzzle(Board,SolBoard).
+
+generate_starry_night(Side):-
+    SolBoardLength is Side * Side,
+    BoardLength is Side * 2,
+    length(SolBoard, SolBoardLength),
+    length(Board, BoardLength),
+    /* dominio das celulas do tabuleiro
+        0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
+    */
+    domain(SolBoard, 0, 3),
+    domain(Board, 0, 3),
+    checkOneSymbolPerLineAndColumn(SolBoard, Side, Side),
+    checkNoDiagonalsBoard(SolBoard, Side, Side),
+    checkOffBoardSymbols(Board, SolBoard, 1),
+    append(Board, SolBoard, Solution),
+    labeling([value(selRandom)], Solution),
+    print_time,!,
+    displayPuzzle(Board, SolBoard).
+
 
 checkOneSymbolPerLineAndColumn(_,_,0).
 
@@ -92,48 +115,58 @@ check se as regras do puzzle relativamente aos simbolos fora do tabuleiro sao cu
 circulo - nessa coluna/linha circulo dessa cor esta mais proximo da estrela
 estrela - nessa coluna/linha os circulos estao a mesma distancia da estrela
 */
-checkOffBoardSymbols(Board, SolBoard):-
+checkOffBoardSymbols(Board, SolBoard, Mode):-
     getBoardSide(SolBoard, Side),
-    checkOffBoardSymbols(Board, SolBoard, Side, 1).
+    checkOffBoardSymbols(Board, SolBoard, Side, 1, Mode).
 
-checkOffBoardSymbols(_, _, Side, CurrentBoardIndex):-
+checkOffBoardSymbols(_, _, Side, CurrentBoardIndex, _):-
     Side*2 =:= CurrentBoardIndex, !.
 
-checkOffBoardSymbols(Board, SolBoard, Side, CurrentBoardIndex):-
+checkOffBoardSymbols(Board, SolBoard, Side, CurrentBoardIndex, Mode):-
     (CurrentBoardIndex > Side,
     ColIndex is CurrentBoardIndex - Side,
-    checkOffBoardColumn(Board, SolBoard, Side, ColIndex); 
-    checkOffBoardLine(Board, SolBoard, Side, CurrentBoardIndex)),
+    checkOffBoardColumn(Board, SolBoard, Side, ColIndex, Mode); 
+    checkOffBoardLine(Board, SolBoard, Side, CurrentBoardIndex, Mode)),
     NewBoardIndex is CurrentBoardIndex + 1,
-    checkOffBoardSymbols(Board, SolBoard, Side, NewBoardIndex).
+    checkOffBoardSymbols(Board, SolBoard, Side, NewBoardIndex, Mode).
 
-checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn):-
+checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn, Mode):-
     getColumn(SolBoard, CurrentColumn, Column),
     OffSymbolIndex is Side + CurrentColumn,
-    nth1(OffSymbolIndex, Board, OffSymbol),
+    (Mode = 0, nth1(OffSymbolIndex, Board, OffSymbol);
+    Mode = 1, element(OffSymbolIndex, Board, OffSymbol)),
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
-    ((OffSymbol = 1, BDist #> WDist);
+    (Mode = 0, ((OffSymbol = 1, BDist #> WDist);
     (OffSymbol = 2, BDist #< WDist);
     (OffSymbol = 3, BDist #= WDist);
-    OffSymbol = 0),
+    OffSymbol = 0);
+    Mode = 1, ((OffSymbol #= 1, BDist #> WDist);
+    (OffSymbol #= 2, BDist #< WDist);
+    (OffSymbol #= 3, BDist #= WDist);
+    OffSymbol #= 0)),
     element(StarIndex, Column, 3),
     element(BlackIndex, Column, 2),
     element(WhiteIndex, Column, 1).
 
-checkOffBoardLine(Board, SolBoard, Side, CurrentLine):-
+checkOffBoardLine(Board, SolBoard, Side, CurrentLine, Mode):-
     getLine(SolBoard, CurrentLine, Line),
-    nth1(CurrentLine, Board, OffSymbol),
+    (Mode = 0, nth1(CurrentLine, Board, OffSymbol);
+    Mode = 1, element(CurrentLine, Board, OffSymbol)),
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
-    ((OffSymbol = 1, BDist #> WDist);
+    (Mode = 0, ((OffSymbol = 1, BDist #> WDist);
     (OffSymbol = 2, BDist #< WDist);
     (OffSymbol = 3, BDist #= WDist);
-    OffSymbol = 0),
+    OffSymbol = 0);
+    ((OffSymbol #= 1, BDist #> WDist);
+    (OffSymbol #= 2, BDist #< WDist);
+    (OffSymbol #= 3, BDist #= WDist);
+    OffSymbol #= 0)),
     element(StarIndex, Line, 3),
     element(BlackIndex, Line, 2),
     element(WhiteIndex, Line, 1).
@@ -141,6 +174,10 @@ checkOffBoardLine(Board, SolBoard, Side, CurrentLine):-
 reset_timer :- statistics(walltime,_).	
 print_time :-
 	statistics(walltime,[_,T]),
-	TS is ((T//10)*10)/1000,
 	nl, write('Time: '), write(T), write('ms'), nl, nl.
 
+selRandom(Var, _, BB0, BB1):-
+    fd_set(Var, Set), fdset_to_list(Set, List),
+    random_member(Value,List),
+    (first_bound(BB0, BB1), Var#= Value;
+    later_bound(BB0, BB1), Var#\= Value).
