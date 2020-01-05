@@ -21,8 +21,8 @@ starry_night(GivenBoard):-
     checkOneSymbolPerLineAndColumn(SolutionBoard, BoardSide, BoardSide),
     checkNoDiagonalsBoard(SolutionBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(GivenBoard, SolutionBoard, 0),
-    labeling([], SolutionBoard),
-    print_time,
+    labeling([leftmost,middle], SolutionBoard),
+    print_time, nl,
     reset_timer,
     displayPuzzle(GivenBoard, SolutionBoard).
 
@@ -43,6 +43,9 @@ generate_starry_night(Side, GivenBoard):-
     append(GivenBoard, SolutionBoard, Solution),
     labeling([value(selRandom)], Solution),
     print_time,
+    nl,
+    getEmptySolutionBoard(Side, EmptyBoard),
+    displayPuzzle(GivenBoard, EmptyBoard),
     write(GivenBoard),
     reset_timer.
 

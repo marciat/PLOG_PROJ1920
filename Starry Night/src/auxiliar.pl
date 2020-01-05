@@ -17,7 +17,7 @@ getColumn(Board, ColNr, Column):-
 	getBoardSide(Board, Side),
 	getColumnRecursive(Board, ColNr, Column, Side).
 
-getColumnRecursive(_, _, [], 0).
+getColumnRecursive(_, _, [], 0):- !.
 
 getColumnRecursive(Board, ColNr, Column, CurrIndex):-
 	CurrIndex > 0,
@@ -31,7 +31,7 @@ getColumnRecursive(Board, ColNr, Column, CurrIndex):-
 */
 getSublist(List, Index, 1, Sublist):-
 	nth1(Index, List, Element),
-	Sublist = [Element].
+	Sublist = [Element], !.
 
 getSublist(List, Index, Nr, Sublist):-
 	Nr > 1,
@@ -55,3 +55,14 @@ boardToLists(Board, Side, CurrentLine, Matrix):-
 	getLine(Board, CurrentLine, Line),
 	append([Line], TmpMatrix, Matrix).
 	  
+getEmptySolutionBoard(Side, Board):-
+	BoardLength is Side * Side,
+	length(Board, BoardLength),
+	fillEmptyBoard(Board, BoardLength).
+
+fillEmptyBoard(_,0):- !.
+
+fillEmptyBoard(Board, Index):-
+	NewIndex is Index - 1,
+	fillEmptyBoard(Board, NewIndex),
+	nth1(Index, Board, 0).

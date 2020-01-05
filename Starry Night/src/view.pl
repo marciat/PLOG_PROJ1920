@@ -9,7 +9,7 @@ displayPuzzle(Board, SolBoard):-
 	getBoardSide(SolBoard, Side),
 	boardToLists(SolBoard, MatrixBoard),
 	printBoard(Board, MatrixBoard, 1, Side),
-	nl, nl. 
+	nl, nl, !.
 
 /* printBoard(+Board, +LineNr, +Columns)
  * Board - Board to be displayed
@@ -32,7 +32,7 @@ printBoard(Board, [], _, Columns):-
 	nl,
 	HorizontalSymbolsStart is Columns + 1,
 	getSublist(Board, HorizontalSymbolsStart, Columns, HorizontalSymbols),
-	printHorizontalSymbols(HorizontalSymbols), nl.
+	printHorizontalSymbols(HorizontalSymbols), nl, !.
 
 % for the rest of the lines, print divider and line contents
 printBoard(Board, [L|T], LineNr, Columns):-
@@ -51,7 +51,7 @@ printBoard(Board, [L|T], LineNr, Columns):-
 printLine(Symbol, []):-
 	put_code(186),
 	symbol(Symbol, S),
-	write(S).
+	write(S), !.
 
 % print vertical divider and cell content
 printLine(Symbol, [C|T]):-
@@ -80,7 +80,7 @@ printCell(C):-
 
 % if there is only one column left, print the divider
 printDivider(1):-
-	put_code(205), put_code(205), put_code(205).	
+	put_code(205), put_code(205), put_code(205),!.	
 
 % print the divider and decrement number of columns
 printDivider(NrColumns):-
@@ -96,7 +96,7 @@ printDivider(NrColumns):-
 % if there is only one column left, print the top border
 printTopBorder(1):-
 	put_code(205), put_code(205), put_code(205),
-	put_code(187), nl.
+	put_code(187), nl,!.
 
 % print the top border and decrement number of columns
 printTopBorder(NrColumns):-
@@ -112,7 +112,7 @@ printTopBorder(NrColumns):-
 
 % if there is only one column left, print the bottom border
 printBottomBorder(1):-
-	put_code(205), put_code(205), put_code(205).
+	put_code(205), put_code(205), put_code(205),!.
 
 % print the bottom border and decrement number of columns
 printBottomBorder(NrColumns):-
@@ -121,7 +121,7 @@ printBottomBorder(NrColumns):-
 	NewNr is NrColumns - 1,
 	printBottomBorder(NewNr).
 
-printHorizontalSymbols([]):- nl.
+printHorizontalSymbols([]):- nl,!.
 
 printHorizontalSymbols(Symbols):-
 	[Head|Tail] = Symbols,
