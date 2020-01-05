@@ -4,20 +4,27 @@
 :- include('view.pl').
 :- include('auxiliar.pl').
 
-%MODE: 0 - solve, 1 - generate
+/* Board cells content
+* 0 - empty
+* 1- white circle
+* 2 - black circle
+* 3 - moon
+*/
 
-
+/* starry_night(+GivenBoard)
+* GivenBoard - Symbols outside board, unsolved puzzle
+* solves puzzle given
+*/
 starry_night(GivenBoard):-
     reset_timer,
-    % board final com a solucao
     length(GivenBoard, BoardInputLength),
     BoardSide is BoardInputLength // 2,
     SolBoardLength is BoardSide * BoardSide,
+    % create board for the solution
     length(SolutionBoard, SolBoardLength),
-    /* dominio das celulas do tabuleiro
-        0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
-    */
+    % cell content domain
     domain(SolutionBoard, 0, 3),
+    % constraints related to puzzle rules
     checkOneSymbolPerLineAndColumn(SolutionBoard, BoardSide, BoardSide),
     checkNoDiagonalsBoard(SolutionBoard, BoardSide, BoardSide),
     checkOffBoardSymbols(GivenBoard, SolutionBoard, 0),
@@ -26,17 +33,22 @@ starry_night(GivenBoard):-
     reset_timer,
     displayPuzzle(GivenBoard, SolutionBoard).
 
+/* generate_starry_night(+Side, -GivenBoard)
+* generates puzzle with given Size and unifies it with GivenBoard
+*/
 generate_starry_night(Side, GivenBoard):-
     reset_timer,
+    % starry night puzzles must be at least 5x5
+    Side >= 5,
     SolBoardLength is Side * Side,
     BoardLength is Side * 2,
+    % create lists for the solution board and the puzzle
     length(SolutionBoard, SolBoardLength),
     length(GivenBoard, BoardLength),
-    /* dominio das celulas do tabuleiro
-        0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
-    */
+    % domain for both lists
     domain(SolutionBoard, 0, 3),
     domain(GivenBoard, 0, 3),
+    % constraints related to puzzle rules
     checkOneSymbolPerLineAndColumn(SolutionBoard, Side, Side),
     checkNoDiagonalsBoard(SolutionBoard, Side, Side),
     checkOffBoardSymbols(GivenBoard, SolutionBoard, 1),
@@ -44,23 +56,36 @@ generate_starry_night(Side, GivenBoard):-
     labeling([value(selRandom)], Solution),
     print_time,
     nl,
+    % create empty solution board
+    % so that the puzzle displayed will be unsolved
     getEmptySolutionBoard(Side, EmptyBoard),
     displayPuzzle(GivenBoard, EmptyBoard),
     write(GivenBoard),
     reset_timer.
 
-
+/* checkOneSymbolPerLineAndColumn(+Board, +Side, +CurrentIndex)
+* ensures there is exactly one star and one circle of each color in each line and column
+* in Board, where Board has Side x Side dimensions
+*/
 checkOneSymbolPerLineAndColumn(_,_,0).
 
 checkOneSymbolPerLineAndColumn(Board, Side, CurrentIndex):-
+    % get current line and column
     getLine(Board, CurrentIndex, Line),
     getColumn(Board, CurrentIndex, Column),
+    % number of zeros is the side minus the number of symbols
     ZerosPerLine is Side - 3,
+    % use global_cardinality to ensure there is exactly one of each symbol
+    % in each line and column, and the rest is empty
     global_cardinality(Line, [0-ZerosPerLine,1-1,2-1,3-1]),
     global_cardinality(Column, [0-ZerosPerLine,1-1,2-1,3-1]),
     NewIndex is CurrentIndex - 1,
+    % continue to the rest of board
     checkOneSymbolPerLineAndColumn(Board, Side, NewIndex).
 
+/* checkNoDiagonalsCell(Board, Horizontal, Vertical)
+*
+*/
 checkNoDiagonalsCell(Board, 1, Vertical):-
     getBoardSide(Board,Side),
     CellIndex is (Vertical-1) * Side + 1,
