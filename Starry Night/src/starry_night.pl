@@ -7,41 +7,44 @@
 %MODE: 0 - solve, 1 - generate
 
 
-starry_night(Board):-
+starry_night(GivenBoard):-
     reset_timer,
     % board final com a solucao
-    length(Board, BoardInputLength),
+    length(GivenBoard, BoardInputLength),
     BoardSide is BoardInputLength // 2,
     SolBoardLength is BoardSide * BoardSide,
-    length(SolBoard, SolBoardLength),
+    length(SolutionBoard, SolBoardLength),
     /* dominio das celulas do tabuleiro
         0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
     */
-    domain(SolBoard, 0, 3),
-    checkOneSymbolPerLineAndColumn(SolBoard, BoardSide, BoardSide),
-    checkNoDiagonalsBoard(SolBoard, BoardSide, BoardSide),
-    checkOffBoardSymbols(Board, SolBoard, 0),
-    labeling([], SolBoard),
+    domain(SolutionBoard, 0, 3),
+    checkOneSymbolPerLineAndColumn(SolutionBoard, BoardSide, BoardSide),
+    checkNoDiagonalsBoard(SolutionBoard, BoardSide, BoardSide),
+    checkOffBoardSymbols(GivenBoard, SolutionBoard, 0),
+    labeling([], SolutionBoard),
     print_time,
-    displayPuzzle(Board,SolBoard).
+    reset_timer,
+    displayPuzzle(GivenBoard, SolutionBoard).
 
-generate_starry_night(Side):-
+generate_starry_night(Side, GivenBoard):-
+    reset_timer,
     SolBoardLength is Side * Side,
     BoardLength is Side * 2,
-    length(SolBoard, SolBoardLength),
-    length(Board, BoardLength),
+    length(SolutionBoard, SolBoardLength),
+    length(GivenBoard, BoardLength),
     /* dominio das celulas do tabuleiro
         0-vazio, 1-circulo branco, 2-circulo preto, 3-estrela
     */
-    domain(SolBoard, 0, 3),
-    domain(Board, 0, 3),
-    checkOneSymbolPerLineAndColumn(SolBoard, Side, Side),
-    checkNoDiagonalsBoard(SolBoard, Side, Side),
-    checkOffBoardSymbols(Board, SolBoard, 1),
-    append(Board, SolBoard, Solution),
+    domain(SolutionBoard, 0, 3),
+    domain(GivenBoard, 0, 3),
+    checkOneSymbolPerLineAndColumn(SolutionBoard, Side, Side),
+    checkNoDiagonalsBoard(SolutionBoard, Side, Side),
+    checkOffBoardSymbols(GivenBoard, SolutionBoard, 1),
+    append(GivenBoard, SolutionBoard, Solution),
     labeling([value(selRandom)], Solution),
-    print_time,!,
-    displayPuzzle(Board, SolBoard).
+    print_time,
+    write(GivenBoard),
+    reset_timer.
 
 
 checkOneSymbolPerLineAndColumn(_,_,0).
@@ -115,26 +118,26 @@ check se as regras do puzzle relativamente aos simbolos fora do tabuleiro sao cu
 circulo - nessa coluna/linha circulo dessa cor esta mais proximo da estrela
 estrela - nessa coluna/linha os circulos estao a mesma distancia da estrela
 */
-checkOffBoardSymbols(Board, SolBoard, Mode):-
-    getBoardSide(SolBoard, Side),
-    checkOffBoardSymbols(Board, SolBoard, Side, 1, Mode).
+checkOffBoardSymbols(GivenBoard, SolutionBoard, Mode):-
+    getBoardSide(SolutionBoard, Side),
+    checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, 1, Mode).
 
 checkOffBoardSymbols(_, _, Side, CurrentBoardIndex, _):-
     Side*2 =:= CurrentBoardIndex, !.
 
-checkOffBoardSymbols(Board, SolBoard, Side, CurrentBoardIndex, Mode):-
+checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, CurrentBoardIndex, Mode):-
     (CurrentBoardIndex > Side,
     ColIndex is CurrentBoardIndex - Side,
-    checkOffBoardColumn(Board, SolBoard, Side, ColIndex, Mode); 
-    checkOffBoardLine(Board, SolBoard, Side, CurrentBoardIndex, Mode)),
+    checkOffBoardColumn(GivenBoard, SolutionBoard, Side, ColIndex, Mode); 
+    checkOffBoardLine(GivenBoard, SolutionBoard, Side, CurrentBoardIndex, Mode)),
     NewBoardIndex is CurrentBoardIndex + 1,
-    checkOffBoardSymbols(Board, SolBoard, Side, NewBoardIndex, Mode).
+    checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, NewBoardIndex, Mode).
 
-checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn, Mode):-
-    getColumn(SolBoard, CurrentColumn, Column),
+checkOffBoardColumn(GivenBoard, SolutionBoard, Side, CurrentColumn, Mode):-
+    getColumn(SolutionBoard, CurrentColumn, Column),
     OffSymbolIndex is Side + CurrentColumn,
-    (Mode = 0, nth1(OffSymbolIndex, Board, OffSymbol);
-    Mode = 1, element(OffSymbolIndex, Board, OffSymbol)),
+    (Mode = 0, nth1(OffSymbolIndex, GivenBoard, OffSymbol);
+    Mode = 1, element(OffSymbolIndex, GivenBoard, OffSymbol)),
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
@@ -151,10 +154,10 @@ checkOffBoardColumn(Board, SolBoard, Side, CurrentColumn, Mode):-
     element(BlackIndex, Column, 2),
     element(WhiteIndex, Column, 1).
 
-checkOffBoardLine(Board, SolBoard, Side, CurrentLine, Mode):-
-    getLine(SolBoard, CurrentLine, Line),
-    (Mode = 0, nth1(CurrentLine, Board, OffSymbol);
-    Mode = 1, element(CurrentLine, Board, OffSymbol)),
+checkOffBoardLine(GivenBoard, SolutionBoard, Side, CurrentLine, Mode):-
+    getLine(SolutionBoard, CurrentLine, Line),
+    (Mode = 0, nth1(CurrentLine, GivenBoard, OffSymbol);
+    Mode = 1, element(CurrentLine, GivenBoard, OffSymbol)),
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
     BDist #= abs(StarIndex - BlackIndex),
