@@ -83,15 +83,22 @@ checkOneSymbolPerLineAndColumn(Board, Side, CurrentIndex):-
     % continue to the rest of board
     checkOneSymbolPerLineAndColumn(Board, Side, NewIndex).
 
-/* checkNoDiagonalsCell(Board, Horizontal, Vertical)
-*
+/* checkNoDiagonalsCell(+Board, +Horizontal, +Vertical)
+* ensures that a cell with given coordinates does not have cells with same symbol
+* touching it diagonally
 */
 checkNoDiagonalsCell(Board, 1, Vertical):-
     getBoardSide(Board,Side),
+    % current cell index in board
     CellIndex is (Vertical-1) * Side + 1,
+    % index of cell on the top right corner
+    % because it is the first cell of the line there is no top left corner cell to check
     Cell1H is 2, Cell1V is Vertical - 1,
     Cell1Index is (Cell1V-1) * Side + Cell1H,
+    % cell content domain
     domain([CellContent, Content1], 0, 3),
+    % if cell is empty then no further checking
+    % else the content of the cells needs to be different
     (CellContent #= 0 #\/ 
     Content1 #\= CellContent),
     element(CellIndex, Board, CellContent),
@@ -99,11 +106,18 @@ checkNoDiagonalsCell(Board, 1, Vertical):-
 
 checkNoDiagonalsCell(Board, Horizontal, Vertical):-
     getBoardSide(Board, Side),
+    % checking if it's the last cell of line
     Horizontal = Side,
+    % current cell index in board
     CellIndex is (Vertical-1) * Side + Horizontal,
+    % index of cell on the top left corner
+    % because it is the last cell of the line there is no top right corner cell to check
     Cell1H is Horizontal - 1, Cell1V is Vertical - 1,
     Cell1Index is (Cell1V-1) * Side + Cell1H,
+    % cell content domain
     domain([CellContent, Content1], 0, 3),
+    % if cell is empty then no further checking
+    % else the content of the cells needs to be different
     (CellContent #= 0 #\/ 
     Content1 #\= CellContent),
     element(CellIndex, Board, CellContent),
@@ -112,13 +126,18 @@ checkNoDiagonalsCell(Board, Horizontal, Vertical):-
 checkNoDiagonalsCell(Board, Horizontal, Vertical):-
     validCoords(Board, Horizontal, Vertical),
     getBoardSide(Board, Side),
-    % guardar simbolo da celula em causa
+    % current cell index in board
     CellIndex is (Vertical-1) * Side + Horizontal,
+    % index of cell on the top left corner
     Cell1H is Horizontal - 1, Cell1V is Vertical - 1,
     Cell1Index is (Cell1V-1) * Side + Cell1H,
+    % index of cell on the top right corner
     Cell2H is Horizontal + 1, Cell2V is Vertical - 1,
     Cell2Index is (Cell2V-1) * Side + Cell2H,
+    % cell content domain
     domain([CellContent, Content1, Content2], 0, 3),
+    % if cell is empty then no further checking
+    % else the content of the cells needs to be different
     (CellContent #= 0 #\/ 
     (Content1 #\= CellContent #/\ Content2 #\= CellContent)),
     element(CellIndex, Board, CellContent),
@@ -127,49 +146,76 @@ checkNoDiagonalsCell(Board, Horizontal, Vertical):-
 
 checkNoDiagonalsLine(_,0,_).
 
-% fazer check de diagonais para uma linha do board
-checkNoDiagonalsLine(Board, Side, Line):-
-    checkNoDiagonalsCell(Board, Side, Line),
-    NewSide is Side - 1,
-    checkNoDiagonalsLine(Board, NewSide, Line).
+/* checkNoDiagonalsLine(+Board, +Column, +Line)
+* ensures that the various cells in a line do not have cells with same symbol
+* touching them diagonally
+*/
+checkNoDiagonalsLine(Board, Column, Line):-
+    % check cell
+    checkNoDiagonalsCell(Board, Column, Line),
+    NewColumn is Column - 1,
+    % continue to rest of the line
+    checkNoDiagonalsLine(Board, NewColumn, Line).
 
+/* checkNoDiagonalsBoard(+Board, +Side, +CurrLine)
+* ensures that CurrLine in Board with Side x Side dimensions
+* does not have cells with same symbol touching diagonally
+*/
 checkNoDiagonalsBoard(_,_,1).
 
-% fazer check de diagonais para as varias celulas, linha sim linha nao
 checkNoDiagonalsBoard(Board, Side, CurrLine):-
+    % check line
     checkNoDiagonalsLine(Board, Side, CurrLine),
     NewLine is CurrLine - 1,
+    % continue to rest of the board
     checkNoDiagonalsBoard(Board, Side, NewLine).
 
-/*
-check se as regras do puzzle relativamente aos simbolos fora do tabuleiro sao cumpridas
-circulo - nessa coluna/linha circulo dessa cor esta mais proximo da estrela
-estrela - nessa coluna/linha os circulos estao a mesma distancia da estrela
+
+/* checkOffBoardSymbols(?GivenBoard, -SolutionBoard, +Mode)
+* checkOffBoardSymbols(?GivenBoard, -SolutionBoard, +Side, +CurrentBoardIndex, +Mode)
+* ensure that puzzle rules regarding symbols outside board (GivenBoard) are being applied in SolutionBoard
+* circle (0/1) - in that line/column the circle with that color is closest to the star
+* star (3) - in that line/column the circles are at the same distance from the star
+* Mode - is 0 if solver (GivenBoard is initialized) or 1 if generator (restrictions will be applied to GivenBoard)
 */
 checkOffBoardSymbols(GivenBoard, SolutionBoard, Mode):-
     getBoardSide(SolutionBoard, Side),
     checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, 1, Mode).
 
 checkOffBoardSymbols(_, _, Side, CurrentBoardIndex, _):-
+    % if whole board has been checked
     Side*2 =:= CurrentBoardIndex, !.
 
 checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, CurrentBoardIndex, Mode):-
-    (CurrentBoardIndex > Side,
-    ColIndex is CurrentBoardIndex - Side,
+    (CurrentBoardIndex > Side, % index corresponds to a column
+    ColIndex is CurrentBoardIndex - Side, % column index
+    % check column
     checkOffBoardColumn(GivenBoard, SolutionBoard, Side, ColIndex, Mode); 
+    % check line
     checkOffBoardLine(GivenBoard, SolutionBoard, Side, CurrentBoardIndex, Mode)),
     NewBoardIndex is CurrentBoardIndex + 1,
+    % continue to rest of board
     checkOffBoardSymbols(GivenBoard, SolutionBoard, Side, NewBoardIndex, Mode).
 
+/* checkOffBoardColumn(?GivenBoard, -SolutionBoard, +Side, +CurrentColumn, +Mode)
+* ensure that puzzle rules regarding symbols outside board (GivenBoard) are being applied
+* in a specific column of SolutionBoard
+*/
 checkOffBoardColumn(GivenBoard, SolutionBoard, Side, CurrentColumn, Mode):-
     getColumn(SolutionBoard, CurrentColumn, Column),
+    % symbol index in GivenBoard
     OffSymbolIndex is Side + CurrentColumn,
     (Mode = 0, nth1(OffSymbolIndex, GivenBoard, OffSymbol);
     Mode = 1, element(OffSymbolIndex, GivenBoard, OffSymbol)),
+    % symbols indexes domain and ensuring they're distinct from each other
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
+    % calculating distance between star and each circle
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
+    % if white circle, white circle distance is smaller
+    % if black circle, white circle distance is larger
+    % if star, distances are the same
     (Mode = 0, ((OffSymbol = 1, BDist #> WDist);
     (OffSymbol = 2, BDist #< WDist);
     (OffSymbol = 3, BDist #= WDist);
@@ -182,14 +228,23 @@ checkOffBoardColumn(GivenBoard, SolutionBoard, Side, CurrentColumn, Mode):-
     element(BlackIndex, Column, 2),
     element(WhiteIndex, Column, 1).
 
+/* checkOffBoardLine(?GivenBoard, -SolutionBoard, +Side, +CurrentLine, +Mode)
+* ensure that puzzle rules regarding symbols outside board (GivenBoard) are being applied
+* in a specific line of SolutionBoard
+*/
 checkOffBoardLine(GivenBoard, SolutionBoard, Side, CurrentLine, Mode):-
     getLine(SolutionBoard, CurrentLine, Line),
     (Mode = 0, nth1(CurrentLine, GivenBoard, OffSymbol);
     Mode = 1, element(CurrentLine, GivenBoard, OffSymbol)),
+    % symbols indexes domain and ensuring they're distinct from each other
     domain([StarIndex, BlackIndex, WhiteIndex], 1, Side),
     all_distinct([StarIndex, BlackIndex, WhiteIndex]),
+    % calculating distance between star and each circle
     BDist #= abs(StarIndex - BlackIndex),
     WDist #= abs(StarIndex - WhiteIndex),
+    % if white circle, white circle distance is smaller
+    % if black circle, white circle distance is larger
+    % if star, distances are the same
     (Mode = 0, ((OffSymbol = 1, BDist #> WDist);
     (OffSymbol = 2, BDist #< WDist);
     (OffSymbol = 3, BDist #= WDist);
@@ -202,11 +257,15 @@ checkOffBoardLine(GivenBoard, SolutionBoard, Side, CurrentLine, Mode):-
     element(BlackIndex, Line, 2),
     element(WhiteIndex, Line, 1).
 
+/* The predicates below were taken from PLOG Moodle Slides*/
+
+% measuring and printing time
 reset_timer :- statistics(walltime,_).	
 print_time :-
 	statistics(walltime,[_,T]),
 	nl, write('Time: '), write(T), write('ms'), nl, nl.
 
+% random selection in labeling
 selRandom(Var, _, BB0, BB1):-
     fd_set(Var, Set), fdset_to_list(Set, List),
     random_member(Value,List),
